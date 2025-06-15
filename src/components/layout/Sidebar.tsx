@@ -15,6 +15,7 @@ import {
   ClipboardDocumentListIcon,
   CalendarIcon,
   Cog6ToothIcon,
+  SparklesIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 
@@ -29,6 +30,7 @@ import {
   ClipboardDocumentListIcon as ClipboardSolidIcon,
   CalendarIcon as CalendarSolidIcon,
   Cog6ToothIcon as CogSolidIcon,
+  SparklesIcon as SparklesSolidIcon,
 } from '@heroicons/react/24/solid';
 
 interface SidebarProps {
@@ -47,6 +49,7 @@ const iconMap = {
   clipboard: { outline: ClipboardDocumentListIcon, solid: ClipboardSolidIcon },
   calendar: { outline: CalendarIcon, solid: CalendarSolidIcon },
   cog: { outline: Cog6ToothIcon, solid: CogSolidIcon },
+  sparkles: { outline: SparklesIcon, solid: SparklesSolidIcon },
 };
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {

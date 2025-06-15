@@ -250,7 +250,17 @@ export const SelfAssessmentForm: React.FC<SelfAssessmentFormProps> = ({
     rows: number = 4
   ) => (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <div className="flex items-center justify-between">
+        <label className="block text-sm font-medium text-gray-700">{label}</label>
+        <AIGenerationButton
+          generationType="self_assessment"
+          contextData={getContextDataForCurrentStep()}
+          cycleId={cycleId}
+          onGenerated={handleGenerateDraft}
+          size="sm"
+          variant="outline"
+        />
+      </div>
       <textarea
         value={value || ''}
         onChange={(e) => handleInputChange(field, e.target.value)}

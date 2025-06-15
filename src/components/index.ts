@@ -10,5 +10,8 @@ export * from './feedback';
 // Review components
 export * from './reviews';
 
+// AI components
+export * from './ai';
+
 // Layout components (to be added in future phases)
 // export * from './layout'; 

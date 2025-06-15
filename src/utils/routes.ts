@@ -15,6 +15,8 @@ export const PROTECTED_ROUTES = {
   DASHBOARD: '/dashboard',
   FEEDBACK: '/feedback',
   REVIEWS: '/reviews',
+  ANALYTICS: '/analytics',
+  AI: '/ai',
   PROFILE: '/profile',
   SETTINGS: '/settings',
   
@@ -56,6 +58,8 @@ export const ROUTE_PERMISSIONS: Record<UserRole, string[]> = {
     PROTECTED_ROUTES.OBJECTIVES,
     PROTECTED_ROUTES.FEEDBACK,
     PROTECTED_ROUTES.REVIEWS,
+    PROTECTED_ROUTES.ANALYTICS,
+    PROTECTED_ROUTES.AI,
     PROTECTED_ROUTES.REPORTS,
     PROTECTED_ROUTES.PROFILE,
     PROTECTED_ROUTES.SETTINGS,
@@ -66,6 +70,8 @@ export const ROUTE_PERMISSIONS: Record<UserRole, string[]> = {
     PROTECTED_ROUTES.TEAM_GOALS,
     PROTECTED_ROUTES.FEEDBACK,
     PROTECTED_ROUTES.REVIEWS,
+    PROTECTED_ROUTES.ANALYTICS,
+    PROTECTED_ROUTES.AI,
     PROTECTED_ROUTES.REPORTS,
     PROTECTED_ROUTES.PROFILE,
     PROTECTED_ROUTES.SETTINGS,
@@ -76,6 +82,8 @@ export const ROUTE_PERMISSIONS: Record<UserRole, string[]> = {
     PROTECTED_ROUTES.TASKS,
     PROTECTED_ROUTES.FEEDBACK,
     PROTECTED_ROUTES.REVIEWS,
+    PROTECTED_ROUTES.ANALYTICS,
+    PROTECTED_ROUTES.AI,
     PROTECTED_ROUTES.PROGRESS,
     PROTECTED_ROUTES.PROFILE,
     PROTECTED_ROUTES.SETTINGS,
@@ -118,6 +126,8 @@ export const getRouteTitle = (path: string): string => {
     [PROTECTED_ROUTES.TASKS]: 'My Tasks',
     [PROTECTED_ROUTES.FEEDBACK]: 'Feedback',
     [PROTECTED_ROUTES.REVIEWS]: 'Reviews',
+    [PROTECTED_ROUTES.ANALYTICS]: 'Analytics',
+    [PROTECTED_ROUTES.AI]: 'AI Insights',
     [PROTECTED_ROUTES.PROGRESS]: 'My Progress',
     [PROTECTED_ROUTES.REPORTS]: 'Reports',
     [PROTECTED_ROUTES.ADMIN_DASHBOARD]: 'Admin Dashboard',
@@ -138,6 +148,8 @@ export const getNavigationItems = (role: UserRole) => {
   const baseItems = [
     { path: PROTECTED_ROUTES.FEEDBACK, label: 'Feedback', icon: 'chat' },
     { path: PROTECTED_ROUTES.REVIEWS, label: 'Reviews', icon: 'star' },
+    { path: PROTECTED_ROUTES.ANALYTICS, label: 'Analytics', icon: 'chart' },
+    { path: PROTECTED_ROUTES.AI, label: 'AI Insights', icon: 'sparkles' },
     { path: PROTECTED_ROUTES.PROFILE, label: 'Profile', icon: 'user' },
   ];
 
@@ -147,8 +159,9 @@ export const getNavigationItems = (role: UserRole) => {
         { path: PROTECTED_ROUTES.ADMIN_DASHBOARD, label: 'Dashboard', icon: 'home' },
         { path: PROTECTED_ROUTES.ADMIN_OBJECTIVES, label: 'Objectives', icon: 'target' },
         { path: PROTECTED_ROUTES.ADMIN_ANALYTICS, label: 'Analytics', icon: 'chart' },
+        { path: PROTECTED_ROUTES.AI, label: 'AI Insights', icon: 'sparkles' },
         { path: PROTECTED_ROUTES.ADMIN_REVIEW_CYCLES, label: 'Review Cycles', icon: 'calendar' },
-        ...baseItems,
+        ...baseItems.filter(item => !['Analytics', 'AI Insights'].includes(item.label)),
         { path: PROTECTED_ROUTES.ADMIN_SETTINGS, label: 'Settings', icon: 'cog' },
       ];
     
@@ -168,7 +181,7 @@ export const getNavigationItems = (role: UserRole) => {
         { path: PROTECTED_ROUTES.GOALS, label: 'My Goals', icon: 'target' },
         { path: PROTECTED_ROUTES.TASKS, label: 'My Tasks', icon: 'clipboard' },
         { path: PROTECTED_ROUTES.PROGRESS, label: 'Progress', icon: 'chart' },
-        ...baseItems,
+        ...baseItems.filter(item => item.label !== 'Analytics'),
         { path: PROTECTED_ROUTES.SETTINGS, label: 'Settings', icon: 'cog' },
       ];
     

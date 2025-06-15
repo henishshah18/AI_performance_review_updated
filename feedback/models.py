@@ -7,7 +7,7 @@ from django.core.validators import MaxLengthValidator
 from okr.models import Objective, Goal, IndividualTask
 from django.conf import settings
 from core.models import Department
-from ai_features.signals import new_content_for_analysis
+# from ai_features.signals import new_content_for_analysis
 
 User = get_user_model()
 
@@ -127,7 +127,8 @@ class Feedback(models.Model):
         super().save(*args, **kwargs)
         if is_new:
             # Send signal for AI analysis
-            new_content_for_analysis.send(sender=self.__class__, instance=self)
+            # new_content_for_analysis.send(sender=self.__class__, instance=self)
+            pass
     
     def __str__(self):
         from_user_name = "Anonymous" if self.is_anonymous else self.from_user.get_full_name()
@@ -163,7 +164,7 @@ class FeedbackTag(models.Model):
     feedback = models.ForeignKey(
         Feedback, 
         on_delete=models.CASCADE, 
-        related_name='tags'
+        related_name='tag_instances'
     )
     tag_name = models.CharField(
         max_length=100,

@@ -27,6 +27,9 @@ import { PeerReviewPage } from './pages/reviews/PeerReviewPage';
 // Analytics Pages
 import AnalyticsPage from './pages/analytics/AnalyticsPage';
 
+// AI Pages
+import AIPage from './pages/ai/AIPage';
+
 // Styles
 import './index.css';
 
@@ -374,6 +377,18 @@ function App() {
                   <ProtectedRoute>
                     <Layout>
                       <AnalyticsPage />
+                    </Layout>
+                  </ProtectedRoute>
+                } 
+              />
+
+              {/* AI Routes */}
+              <Route 
+                path="/ai" 
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <AIPage />
                     </Layout>
                   </ProtectedRoute>
                 } 

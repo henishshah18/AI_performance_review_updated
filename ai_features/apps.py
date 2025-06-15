@@ -4,7 +4,11 @@ from django.apps import AppConfig
 class AiFeaturesConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "ai_features"
-
+    verbose_name = "AI Features"
+    
     def ready(self):
-        # Implicitly connect signal handlers decorated with @receiver.
-        from . import handlers
+        """Import signal handlers when the app is ready"""
+        try:
+            import ai_features.signals
+        except ImportError:
+            pass
