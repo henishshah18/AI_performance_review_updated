@@ -25,7 +25,7 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default="django-insecure-ax2+w#!n&-y10&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver', cast=lambda v: [s.strip() for s in v.split(',')])
 
 # Application definition
 DJANGO_APPS = [
@@ -47,10 +47,10 @@ LOCAL_APPS = [
     # Will be added as we create them
     'core',
     'authentication',
-    # 'okr',
-    # 'feedback',
-    # 'reviews',
-    # 'analytics',
+    'analytics',
+    'okr',
+    'feedback',
+    'reviews',
     # 'notifications',
     # 'ai_features',
 ]
