@@ -26,7 +26,7 @@ const InfoIcon = () => (
   </svg>
 );
 
-interface ToastItemProps {
+export interface ToastItemProps {
   toast: ToastType;
 }
 

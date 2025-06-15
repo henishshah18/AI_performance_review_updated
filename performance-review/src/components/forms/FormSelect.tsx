@@ -7,6 +7,7 @@ export interface SelectOption {
 }
 
 export interface FormSelectProps {
+  id?: string;
   name: string;
   label: string;
   options: SelectOption[];
@@ -17,12 +18,13 @@ export interface FormSelectProps {
   error?: string;
   helpText?: string;
   className?: string;
-  value?: string | string[] | number | number[];
+  value?: string | number | readonly string[];
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLSelectElement>) => void;
 }
 
 const FormSelect: React.FC<FormSelectProps> = ({
+  id,
   name,
   label,
   options,
@@ -37,7 +39,7 @@ const FormSelect: React.FC<FormSelectProps> = ({
   onChange,
   onBlur,
 }) => {
-  const fieldId = `select-${name}`;
+  const fieldId = id || `select-${name}`;
   const errorId = `${fieldId}-error`;
   const helpId = `${fieldId}-help`;
 

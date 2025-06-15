@@ -1,6 +1,7 @@
 import React from 'react';
 
 export interface FormFieldProps {
+  id?: string;
   name: string;
   label: string;
   type?: string;
@@ -10,12 +11,14 @@ export interface FormFieldProps {
   error?: string;
   helpText?: string;
   className?: string;
+  autoComplete?: string;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 const FormField: React.FC<FormFieldProps> = ({
+  id,
   name,
   label,
   type = 'text',
@@ -28,8 +31,9 @@ const FormField: React.FC<FormFieldProps> = ({
   value,
   onChange,
   onBlur,
+  autoComplete,
 }) => {
-  const fieldId = `field-${name}`;
+  const fieldId = id || `field-${name}`;
   const errorId = `${fieldId}-error`;
   const helpId = `${fieldId}-help`;
 
@@ -60,6 +64,7 @@ const FormField: React.FC<FormFieldProps> = ({
         value={value}
         onChange={onChange}
         onBlur={onBlur}
+        autoComplete={autoComplete}
         className={inputClasses}
         aria-invalid={error ? 'true' : 'false'}
         aria-describedby={`${error ? errorId : ''} ${helpText ? helpId : ''}`.trim()}

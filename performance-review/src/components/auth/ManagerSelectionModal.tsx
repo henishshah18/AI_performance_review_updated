@@ -18,7 +18,7 @@ const validationSchema = Yup.object({
   manager_id: Yup.string().required('Please select a manager to continue'),
 });
 
-export function ManagerSelectionModal({ isOpen, onClose }: ManagerSelectionModalProps) {
+export function ManagerSelectionModal({ isOpen, onClose = () => {} }: ManagerSelectionModalProps) {
   const { user, assignManager, error, clearError } = useAuth();
   const [managers, setManagers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);

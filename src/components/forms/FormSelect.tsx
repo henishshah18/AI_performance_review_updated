@@ -7,6 +7,7 @@ export interface SelectOption {
 }
 
 export interface FormSelectProps {
+  id?: string;
   name: string;
   label: string;
   options: SelectOption[];
@@ -23,6 +24,7 @@ export interface FormSelectProps {
 }
 
 const FormSelect: React.FC<FormSelectProps> = ({
+  id,
   name,
   label,
   options,
@@ -37,7 +39,7 @@ const FormSelect: React.FC<FormSelectProps> = ({
   onChange,
   onBlur,
 }) => {
-  const fieldId = `select-${name}`;
+  const fieldId = id || `select-${name}`;
   const errorId = `${fieldId}-error`;
   const helpId = `${fieldId}-help`;
 

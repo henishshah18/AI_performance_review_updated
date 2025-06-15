@@ -152,9 +152,9 @@ export function getTaskPermissions(
   return {
     canView: true,
     canEdit: isOwner && canEditStatus,
-    canDelete: (isOwner || context.isManager) && canDeleteStatus,
+    canDelete: (isOwner || (context.isManager ?? false)) && canDeleteStatus,
     canComplete: isOwner && canCompleteStatus,
-    canAssign: context.isManager || context.isHrAdmin,
+    canAssign: (context.isManager ?? false) || (context.isHrAdmin ?? false),
     canComment: true,
     canGiveFeedback: true
   };
@@ -169,12 +169,12 @@ export function getFeedbackPermissions(
   const isRecipient = context.userId === feedbackRecipientId;
   
   return {
-    canView: isGiver || isRecipient || context.isManager || context.isHrAdmin,
+    canView: isGiver || isRecipient || (context.isManager ?? false) || (context.isHrAdmin ?? false),
     canEdit: isGiver, // Only the giver can edit their feedback
-    canDelete: isGiver || context.isHrAdmin,
+    canDelete: isGiver || (context.isHrAdmin ?? false),
     canComplete: false, // Feedback doesn't have completion
     canAssign: false, // Feedback cannot be assigned
-    canComment: isRecipient || context.isManager || context.isHrAdmin,
+    canComment: isRecipient || (context.isManager ?? false) || (context.isHrAdmin ?? false),
     canGiveFeedback: context.userId !== feedbackRecipientId // Cannot give feedback to yourself
   };
 }
@@ -205,12 +205,12 @@ export function canAccessUser(
   }
   
   // HR Admin can access anyone
-  if (context.isHrAdmin) {
+  if (context.isHrAdmin ?? false) {
     return true;
   }
   
   // Managers can access users in their department
-  if (context.isManager && context.departmentId === targetUserDepartmentId) {
+  if ((context.isManager ?? false) && context.departmentId === targetUserDepartmentId) {
     return true;
   }
   

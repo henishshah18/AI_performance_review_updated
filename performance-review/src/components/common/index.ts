@@ -10,7 +10,6 @@ export { default as ProgressBar } from './ProgressBar';
 export { default as CircularProgress } from './CircularProgress';
 
 export type { StatusBadgeProps } from './StatusBadge';
-export type { ToastProps } from './Toast';
 export type { ModalProps } from './Modal';
 export type { LoadingSpinnerProps } from './LoadingSpinner';
 export type { LoadingSkeletonProps } from './LoadingSkeleton';

@@ -11,14 +11,14 @@ import ErrorMessage from '../common/ErrorMessage';
 
 interface ManagerSelectionModalProps {
   isOpen: boolean;
-  onClose: () => void; // Required - will be provided by parent
+  onClose?: () => void; // Made optional
 }
 
 const validationSchema = Yup.object({
   manager_id: Yup.string().required('Please select a manager to continue'),
 });
 
-export function ManagerSelectionModal({ isOpen, onClose }: ManagerSelectionModalProps) {
+export function ManagerSelectionModal({ isOpen, onClose = () => {} }: ManagerSelectionModalProps) {
   const { user, assignManager, error, clearError } = useAuth();
   const [managers, setManagers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -158,7 +158,6 @@ export function ManagerSelectionModal({ isOpen, onClose }: ManagerSelectionModal
           {/* Department Selection (if user doesn't have one or wants to change) */}
           {!user?.department_id && (
             <FormSelect
-              id="department_id"
               name="department_id"
               label="Department"
               placeholder="Select your department"
@@ -172,7 +171,6 @@ export function ManagerSelectionModal({ isOpen, onClose }: ManagerSelectionModal
 
           {/* Manager Selection */}
           <FormSelect
-            id="manager_id"
             name="manager_id"
             label="Manager"
             placeholder={

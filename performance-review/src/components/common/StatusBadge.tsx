@@ -1,7 +1,7 @@
 import React from 'react';
 import { StatusType, getStatusConfig } from '../../utils/statusValidation';
 
-interface StatusBadgeProps {
+export interface StatusBadgeProps {
   status: StatusType;
   size?: 'sm' | 'md' | 'lg';
   showTooltip?: boolean;
