@@ -149,7 +149,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['email'] = serializers.EmailField()
-        del self.fields['username']
+        if 'username' in self.fields:
+            del self.fields['username']
     
     @classmethod
     def get_token(cls, user):
@@ -165,24 +166,31 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
     
     def validate(self, attrs):
-        """Validate login credentials."""
+        """Validate login credentials using email."""
         email = attrs.get('email')
         password = attrs.get('password')
         
-        if email and password:
-            try:
-                user = User.objects.get(email=email)
-                if not user.check_password(password):
-                    raise serializers.ValidationError('Invalid credentials.')
-                if not user.is_active:
-                    raise serializers.ValidationError('User account is disabled.')
-                
-                attrs['username'] = user.username  # Set username for parent validation
-                
-            except User.DoesNotExist:
-                raise serializers.ValidationError('Invalid credentials.')
+        if not email or not password:
+            raise serializers.ValidationError('Email and password are required.')
         
-        return super().validate(attrs)
+        try:
+            user = User.objects.get(email=email)
+            if not user.check_password(password):
+                raise serializers.ValidationError('Invalid credentials.')
+            if not user.is_active:
+                raise serializers.ValidationError('User account is disabled.')
+            
+            # Create the token data directly
+            refresh = self.get_token(user)
+            
+            return {
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': user,
+            }
+            
+        except User.DoesNotExist:
+            raise serializers.ValidationError('Invalid credentials.')
 
 
 class PasswordChangeSerializer(serializers.Serializer):
