@@ -5,6 +5,9 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.core.validators import MaxLengthValidator
 from okr.models import Objective, Goal, IndividualTask
+from django.conf import settings
+from core.models import Department
+from ai_features.signals import new_content_for_analysis
 
 User = get_user_model()
 
@@ -89,6 +92,7 @@ class Feedback(models.Model):
         help_text="Whether AI sentiment analysis has been performed"
     )
     
+    tags = models.ManyToManyField('FeedbackTag', related_name='feedback_items', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -119,12 +123,15 @@ class Feedback(models.Model):
             raise ValidationError("Related task must be assigned to feedback recipient")
     
     def save(self, *args, **kwargs):
-        self.full_clean()
+        is_new = self._state.adding
         super().save(*args, **kwargs)
+        if is_new:
+            # Send signal for AI analysis
+            new_content_for_analysis.send(sender=self.__class__, instance=self)
     
     def __str__(self):
-        anonymous_text = " (Anonymous)" if self.is_anonymous else ""
-        return f"{self.get_feedback_type_display()} from {self.from_user.get_full_name()} to {self.to_user.get_full_name()}{anonymous_text}"
+        from_user_name = "Anonymous" if self.is_anonymous else self.from_user.get_full_name()
+        return f"Feedback from {from_user_name} to {self.to_user.get_full_name()} at {self.created_at.strftime('%Y-%m-%d')}"
     
     @property
     def display_sender(self):
@@ -172,7 +179,7 @@ class FeedbackTag(models.Model):
         ]
     
     def __str__(self):
-        return f"{self.tag_name} - {self.feedback}"
+        return self.tag_name
 
 
 class FeedbackTagTemplate(models.Model):

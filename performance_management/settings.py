@@ -35,12 +35,14 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
 ]
 
 THIRD_PARTY_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 LOCAL_APPS = [
@@ -51,9 +53,14 @@ LOCAL_APPS = [
     'okr',
     'feedback',
     'reviews',
+    'ai_features',
     # 'notifications',
     # 'ai_features',
 ]
+
+# AI Features App - Phase 9
+if 'ai_features' not in LOCAL_APPS:
+    LOCAL_APPS.append('ai_features')
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -195,7 +202,8 @@ CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=DEBUG, cast=bo
 AUTH_USER_MODEL = 'core.User'
 
 # OpenAI Configuration
-OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
+OPENAI_API_KEY = config('OPENAI_API_KEY', default=None)
+OPENAI_DEFAULT_MODEL = config('OPENAI_DEFAULT_MODEL', default='gpt-3.5-turbo')
 
 # Email Configuration (for notifications)
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')

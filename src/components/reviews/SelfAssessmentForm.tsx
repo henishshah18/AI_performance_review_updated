@@ -14,6 +14,10 @@ import { SelfAssessment, CreateSelfAssessmentData, ReviewCycle } from '../../typ
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
 import { Button } from '../common/Button';
+import FormField from '../forms/FormField';
+import FormTextarea from '../forms/FormTextarea';
+import AIGenerationButton from '../ai/AIGenerationButton';
+import aiService from '../../services/aiService';
 
 interface SelfAssessmentFormProps {
   cycleId: string;
@@ -192,6 +196,20 @@ export const SelfAssessmentForm: React.FC<SelfAssessmentFormProps> = ({
       setError(err instanceof Error ? err.message : 'Failed to submit assessment');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleGenerateDraft = async () => {
+    try {
+      const { draft } = await aiService.generateSelfAssessmentDraft();
+      // Assuming 'strengths' is a field in your formik values
+      setFormData(prev => ({
+        ...prev,
+        strengths: draft
+      }));
+    } catch (error) {
+      // You might want to show an error toast here
+      console.error("Failed to generate AI draft", error);
     }
   };
 
@@ -542,6 +560,28 @@ export const SelfAssessmentForm: React.FC<SelfAssessmentFormProps> = ({
             </div>
           </div>
         )}
+
+        <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+          <h3 className="text-lg font-medium">Self-Assessment</h3>
+          <AIGenerationButton
+            onClick={handleGenerateDraft}
+            buttonText="Generate Draft with AI"
+            generatingText="Generating..."
+          />
+        </div>
+
+        {/* Strengths Field */}
+        <FormTextarea
+          id="strengths"
+          name="strengths"
+          label="What are your key strengths and accomplishments during this period?"
+          value={formData.strengths}
+          onChange={(e) => handleInputChange('strengths', e.target.value)}
+          onBlur={(e) => handleInputChange('strengths', e.target.value)}
+          error={formData.strengths ? undefined : 'Strengths are required'}
+          rows={5}
+          required
+        />
       </div>
     </div>
   );

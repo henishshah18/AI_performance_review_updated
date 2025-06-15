@@ -25,4 +25,5 @@ urlpatterns = [
     path("api/okr/", include('okr.urls')),
     path("api/feedback/", include('feedback.urls')),
     path("api/reviews/", include('reviews.urls')),
+    path("api/ai/", include('ai_features.urls')),
 ]
