@@ -1,0 +1,552 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# API Endpoints - Performance Management Web Application
+
+## **Authentication Endpoints**
+```
+POST   /api/auth/login                      # Login with role-based redirect
+POST   /api/auth/logout                     # Logout with token blacklisting
+POST   /api/auth/signup                     # User registration with role validation
+GET    /api/auth/me                         # Get current user profile
+POST   /api/auth/refresh                    # Refresh JWT token
+POST   /api/auth/forgot-password            # Password reset request
+POST   /api/auth/reset-password             # Password reset confirmation
+PUT    /api/auth/change-password            # Change password (authenticated)
+```
+
+---
+
+## **User & Department Management**
+
+### **User Management**
+```
+GET    /api/users/profile                   # Get current user profile
+PUT    /api/users/profile                   # Update current user profile
+GET    /api/users/team                      # Get team members (department-filtered)
+GET    /api/users/{id}/profile              # Get specific user profile
+GET    /api/users/search                    # Search users (for assignments)
+PUT    /api/users/assign-manager            # Assign manager to individual contributor
+GET    /api/users/unassigned                # Get users without managers (HR Admin only)
+PUT    /api/users/{id}/activate             # Activate/deactivate user (HR Admin only)
+```
+
+### **Department Management**
+```
+GET    /api/departments                     # List all departments
+POST   /api/departments                     # Create department (HR Admin only)
+GET    /api/departments/{id}                # Get department details
+PUT    /api/departments/{id}                # Update department (HR Admin only)
+DELETE /api/departments/{id}                # Delete department (HR Admin only)
+GET    /api/departments/{id}/members        # Get department members
+PUT    /api/departments/{id}/manager        # Assign department manager (HR Admin only)
+```
+
+---
+
+## **Module 1: OKR & Goal Management**
+
+### **Objectives**
+```
+GET    /api/objectives                    # List user's objectives (role-filtered)
+POST   /api/objectives                    # Create new objective (HR Admin only)
+GET    /api/objectives/{id}               # Get objective details
+PUT    /api/objectives/{id}               # Update objective (HR Admin only)
+DELETE /api/objectives/{id}               # Delete objective (HR Admin only)
+GET    /api/objectives/{id}/progress      # Get objective progress summary
+GET    /api/objectives/{id}/analytics     # Get objective analytics
+POST   /api/objectives/{id}/duplicate     # Duplicate objective (HR Admin only)
+GET    /api/objectives/company-wide       # Get all objectives (HR Admin only)
+PUT    /api/objectives/{id}/status        # Update objective status (HR Admin only)
+GET    /api/objectives/by-department      # Get objectives by department (HR Admin only)
+```
+
+### **Goals**
+```
+GET    /api/objectives/{objective_id}/goals     # List goals for objective
+POST   /api/objectives/{objective_id}/goals     # Create goal under objective (Manager only)
+GET    /api/goals/{id}                          # Get goal details
+PUT    /api/goals/{id}                          # Update goal (Manager only)
+DELETE /api/goals/{id}                          # Delete goal (Manager only)
+PUT    /api/goals/{id}/assign                   # Assign goal to user (Manager only)
+GET    /api/goals/my-goals                      # Get current user's assigned goals
+GET    /api/goals/team-goals                    # Get team goals (Manager only)
+PUT    /api/goals/{id}/status                   # Update goal status
+PUT    /api/goals/{id}/priority                 # Update goal priority (Manager only)
+GET    /api/goals/{id}/progress                 # Get goal progress rollup
+GET    /api/goals/overdue                       # Get overdue goals (role-filtered)
+POST   /api/goals/{id}/duplicate                # Duplicate goal (Manager only)
+GET    /api/goals/by-assignee/{user_id}         # Get goals by assignee (Manager only)
+```
+
+### **Individual Tasks**
+```
+GET    /api/goals/{goal_id}/tasks               # List tasks for goal
+POST   /api/goals/{goal_id}/tasks               # Create task under goal
+GET    /api/tasks/{id}                          # Get task details
+PUT    /api/tasks/{id}                          # Update task
+DELETE /api/tasks/{id}                          # Delete task
+PUT    /api/tasks/{id}/progress                 # Update task progress
+GET    /api/tasks/my-tasks                      # Get current user's assigned tasks
+PUT    /api/tasks/{id}/status                   # Update task status
+PUT    /api/tasks/{id}/priority                 # Update task priority
+PUT    /api/tasks/{id}/blocker                  # Update task blocker description
+GET    /api/tasks/overdue                       # Get overdue tasks (role-filtered)
+GET    /api/tasks/by-status/{status}            # Get tasks by status (role-filtered)
+POST   /api/tasks/{id}/evidence                 # Add evidence link to task
+DELETE /api/tasks/{id}/evidence/{evidence_id}   # Remove evidence link
+GET    /api/tasks/team-tasks                    # Get team tasks (Manager only)
+```
+
+### **Progress Updates**
+```
+GET    /api/tasks/{task_id}/updates             # Get task update history
+POST   /api/tasks/{task_id}/updates             # Add progress update
+PUT    /api/tasks/updates/{id}                  # Update specific progress update
+DELETE /api/tasks/updates/{id}                  # Delete progress update
+GET    /api/goals/{goal_id}/progress            # Get goal progress rollup
+GET    /api/objectives/{objective_id}/analytics # Get objective analytics
+GET    /api/progress/summary                    # Get progress summary (role-filtered)
+GET    /api/progress/team-summary               # Get team progress summary (Manager only)
+```
+
+---
+
+## **Module 2: Continuous Feedback**
+
+### **Feedback**
+```
+GET    /api/feedback                            # Get feedback for current user
+POST   /api/feedback                            # Give feedback
+GET    /api/feedback/{id}                       # Get specific feedback
+PUT    /api/feedback/{id}                       # Update feedback (limited)
+DELETE /api/feedback/{id}                       # Delete feedback (limited)
+GET    /api/feedback/given                      # Feedback given by current user
+GET    /api/feedback/received                   # Feedback received by current user
+GET    /api/feedback/team                       # Get team feedback (Manager only)
+GET    /api/feedback/by-type/{type}             # Get feedback by type (role-filtered)
+GET    /api/feedback/recent                     # Get recent feedback (role-filtered)
+POST   /api/feedback/{id}/tags                  # Add tags to feedback
+DELETE /api/feedback/{id}/tags/{tag}            # Remove tag from feedback
+GET    /api/feedback/anonymous                  # Get anonymous feedback received
+```
+
+### **Feedback Comments**
+```
+GET    /api/feedback/{feedback_id}/comments     # Get feedback comments
+POST   /api/feedback/{feedback_id}/comments     # Add comment to feedback
+PUT    /api/feedback/comments/{id}              # Update comment
+DELETE /api/feedback/comments/{id}              # Delete comment
+```
+
+### **Feedback Analytics** (Manager View)
+```
+GET    /api/feedback/team-summary               # Team feedback summary
+GET    /api/feedback/tags/trending              # Trending feedback tags
+GET    /api/feedback/team/{user_id}/summary     # Individual team member summary
+```
+
+---
+
+## **Module 3: Performance Reviews (360°)**
+
+### **Review Cycle Management**
+```
+GET    /api/review-cycles                     # List all review cycles
+POST   /api/review-cycles                     # Create new review cycle (HR Admin only)
+GET    /api/review-cycles/{id}                # Get review cycle details
+PUT    /api/review-cycles/{id}                # Update review cycle (HR Admin only)
+DELETE /api/review-cycles/{id}                # Delete review cycle (HR Admin only)
+GET    /api/review-cycles/active              # Get current active cycle
+GET    /api/review-cycles/{id}/participants   # Get participants in cycle
+POST   /api/review-cycles/{id}/participants   # Add participants to cycle (HR Admin only)
+DELETE /api/review-cycles/{id}/participants/{user_id} # Remove participant (HR Admin only)
+PUT    /api/review-cycles/{id}/status         # Update cycle status (HR Admin only)
+GET    /api/review-cycles/{id}/progress       # Get cycle progress overview
+GET    /api/review-cycles/{id}/completion-rates # Get completion rates by department
+POST   /api/review-cycles/{id}/duplicate      # Duplicate review cycle (HR Admin only)
+GET    /api/review-cycles/{id}/reminders      # Get reminder schedule
+POST   /api/review-cycles/{id}/send-reminders # Send manual reminders (HR Admin only)
+```
+
+### **Self-Assessment**
+```
+GET    /api/review-cycles/{cycle_id}/self-assessment        # Get user's self-assessment
+POST   /api/review-cycles/{cycle_id}/self-assessment        # Create/update self-assessment
+PUT    /api/review-cycles/{cycle_id}/self-assessment        # Update self-assessment
+POST   /api/review-cycles/{cycle_id}/self-assessment/submit # Submit self-assessment
+GET    /api/self-assessments/{id}/goal-assessments          # Get goal assessments for self-assessment
+POST   /api/self-assessments/{id}/goal-assessments          # Add goal assessment
+PUT    /api/goal-assessments/{id}                           # Update specific goal assessment
+```
+
+### **Peer Reviews**
+```
+GET    /api/review-cycles/{cycle_id}/peer-reviews           # Get user's assigned peer reviews
+GET    /api/review-cycles/{cycle_id}/peer-reviews/received  # Get peer reviews received by user
+POST   /api/review-cycles/{cycle_id}/peer-reviews           # Create peer review
+GET    /api/peer-reviews/{id}                               # Get specific peer review
+PUT    /api/peer-reviews/{id}                               # Update peer review
+POST   /api/peer-reviews/{id}/submit                        # Submit peer review
+GET    /api/review-cycles/{cycle_id}/peer-review-assignments # Get who should review whom
+POST   /api/review-cycles/{cycle_id}/peer-review-assignments # Create peer review assignments (HR Admin only)
+PUT    /api/peer-review-assignments/{id}                    # Update assignment status
+DELETE /api/peer-review-assignments/{id}                    # Delete assignment (HR Admin only)
+GET    /api/peer-review-assignments/my-assignments          # Get current user's assignments
+PUT    /api/peer-review-assignments/{id}/decline            # Decline peer review assignment
+```
+
+### **Manager Reviews**
+```
+GET    /api/review-cycles/{cycle_id}/manager-reviews        # Get manager's assigned reviews
+POST   /api/review-cycles/{cycle_id}/manager-reviews        # Create manager review
+GET    /api/manager-reviews/{id}                            # Get specific manager review
+PUT    /api/manager-reviews/{id}                            # Update manager review
+POST   /api/manager-reviews/{id}/submit                     # Submit manager review
+GET    /api/manager-reviews/{id}/goal-assessments           # Get goal assessments in manager review
+POST   /api/manager-reviews/{id}/goal-assessments           # Add goal assessment to manager review
+PUT    /api/goal-manager-assessments/{id}                   # Update specific goal assessment
+```
+
+### **Upward Reviews**
+```
+GET    /api/review-cycles/{cycle_id}/upward-review          # Get user's upward review for their manager
+POST   /api/review-cycles/{cycle_id}/upward-review          # Create/update upward review
+PUT    /api/review-cycles/{cycle_id}/upward-review          # Update upward review
+POST   /api/review-cycles/{cycle_id}/upward-review/submit   # Submit upward review
+GET    /api/review-cycles/{cycle_id}/upward-reviews/received # Get upward reviews received by manager
+```
+
+### **Review Analytics & Dashboards**
+```
+GET    /api/review-cycles/{cycle_id}/dashboard/manager      # Manager dashboard for cycle
+GET    /api/review-cycles/{cycle_id}/dashboard/individual   # Individual dashboard for cycle
+GET    /api/review-cycles/{cycle_id}/progress               # Overall cycle progress
+GET    /api/review-cycles/{cycle_id}/analytics              # Cycle analytics (HR Admin)
+GET    /api/users/{user_id}/review-summary/{cycle_id}       # Complete review summary for user
+```
+
+### **Review Meetings**
+```
+GET    /api/review-cycles/{cycle_id}/meetings               # Get review meetings for cycle
+POST   /api/review-cycles/{cycle_id}/meetings               # Schedule review meeting
+GET    /api/meetings/{id}                                   # Get meeting details
+PUT    /api/meetings/{id}                                   # Update meeting
+POST   /api/meetings/{id}/complete                          # Mark meeting as completed
+```
+
+---
+
+## **AI-Powered Features**
+
+### **AI Review Suggestions (Real-time Generation)**
+```
+POST   /api/ai/peer-reviews/generate-draft                   # Generate AI draft for peer review (real-time)
+POST   /api/ai/manager-reviews/generate-draft                # Generate AI draft for manager review (real-time)
+POST   /api/ai/self-assessments/generate-draft               # Generate AI draft for self-assessment (real-time)
+POST   /api/ai/self-assessments/generate-summary             # Generate AI summary for self-assessment (real-time)
+```
+
+### **AI Sentiment Analysis**
+```
+POST   /api/ai/sentiment/analyze                             # Batch analyze content sentiment
+GET    /api/ai/sentiment/feedback/{feedback_id}              # Get feedback sentiment analysis
+GET    /api/ai/sentiment/reviews/{review_id}                 # Get review sentiment analysis
+GET    /api/ai/sentiment/self-assessments/{assessment_id}    # Get self-assessment sentiment
+GET    /api/ai/sentiment/dashboard/manager                   # Manager sentiment dashboard
+GET    /api/ai/sentiment/alerts                              # Get flagged content alerts
+GET    /api/ai/sentiment/trends                              # Sentiment trends over time
+```
+
+### **AI Sentiment Overview**
+```
+GET    /api/ai/sentiment/overview                            # Company-wide sentiment overview
+```
+
+---
+
+## **Enhanced Existing Endpoints**
+
+### **Enhanced Dashboard Endpoints (with AI insights)**
+```
+GET    /api/dashboard/hr-admin?include_ai_insights=true      # HR dashboard with AI analytics
+GET    /api/dashboard/manager?include_ai_insights=true       # Manager dashboard with AI insights
+GET    /api/dashboard/individual?include_ai_insights=true    # Individual dashboard with AI insights
+```
+
+### **Enhanced Analytics Endpoints (with AI analysis)**
+```
+GET    /api/review-cycles/{cycle_id}/analytics?include_ai_analysis=true      # Review analytics with AI insights
+GET    /api/reports/team-performance?include_sentiment=true                  # Team reports with sentiment
+GET    /api/reports/feedback-analytics?include_ai_insights=true              # Feedback reports with AI analysis
+```
+
+---
+
+## **Business Rules & Validation**
+
+### **Validation Endpoints**
+```
+POST   /api/validation/goal-timeline           # Validate goal timeline against objective
+POST   /api/validation/task-timeline           # Validate task timeline against goal
+POST   /api/validation/department-assignment   # Validate user department assignment
+POST   /api/validation/manager-assignment      # Validate manager assignment rules
+POST   /api/validation/goal-title-unique       # Validate goal title uniqueness within objective
+POST   /api/validation/task-title-unique       # Validate task title uniqueness within goal
+GET    /api/validation/edit-permissions/{type}/{id} # Check edit permissions for entity
+```
+
+### **Edge Case Handling**
+```
+GET    /api/edge-cases/no-manager-users        # Get users without managers (HR Admin only)
+GET    /api/edge-cases/no-team-managers        # Get managers without team members
+GET    /api/edge-cases/orphaned-goals          # Get goals without objectives (should be none)
+GET    /api/edge-cases/overdue-items           # Get all overdue items (role-filtered)
+GET    /api/edge-cases/blocked-items           # Get all blocked items (role-filtered)
+GET    /api/edge-cases/inactive-users          # Get inactive users (HR Admin only)
+POST   /api/edge-cases/resolve-no-manager      # Resolve no manager assignment
+POST   /api/edge-cases/resolve-no-team         # Resolve no team assignment
+```
+
+---
+
+## **General Utilities**
+
+### **Search & Filtering**
+```
+GET    /api/search/users                        # Search users with filters
+GET    /api/search/objectives                   # Search objectives (role-filtered)
+GET    /api/search/goals                        # Search goals (role-filtered)
+GET    /api/search/tasks                        # Search tasks (role-filtered)
+GET    /api/search/feedback                     # Search feedback (role-filtered)
+GET    /api/search/global                       # Global search across all entities
+```
+
+### **Data Export & Import**
+```
+GET    /api/export/objectives                   # Export objectives data (HR Admin only)
+GET    /api/export/goals                        # Export goals data (role-filtered)
+GET    /api/export/feedback                     # Export feedback data (role-filtered)
+GET    /api/export/review-cycle/{id}            # Export review cycle data (HR Admin only)
+POST   /api/import/users                        # Import users from CSV (HR Admin only)
+POST   /api/import/objectives                   # Import objectives from CSV (HR Admin only)
+GET    /api/export/templates/users              # Get user import template
+GET    /api/export/templates/objectives         # Get objective import template
+```
+
+### **Dashboard Endpoints**
+```
+GET    /api/dashboard/hr-admin                  # HR Admin dashboard data
+GET    /api/dashboard/manager                   # Manager dashboard data
+GET    /api/dashboard/individual                # Individual contributor dashboard data
+```
+
+### **Notifications**
+```
+GET    /api/notifications                       # Get user notifications
+PUT    /api/notifications/{id}/read             # Mark notification as read
+PUT    /api/notifications/mark-all-read         # Mark all notifications as read
+GET    /api/notifications/unread-count          # Get unread notification count
+DELETE /api/notifications/{id}                  # Delete notification
+GET    /api/notifications/by-type/{type}        # Get notifications by type
+POST   /api/notifications/preferences           # Update notification preferences
+GET    /api/notifications/preferences           # Get notification preferences
+```
+
+### **System Settings & Configuration**
+```
+GET    /api/settings/system                     # Get system settings (HR Admin only)
+PUT    /api/settings/system                     # Update system settings (HR Admin only)
+GET    /api/settings/feedback-tags              # Get available feedback tags
+POST   /api/settings/feedback-tags              # Create feedback tag (HR Admin only)
+PUT    /api/settings/feedback-tags/{id}         # Update feedback tag (HR Admin only)
+DELETE /api/settings/feedback-tags/{id}         # Delete feedback tag (HR Admin only)
+GET    /api/settings/competencies               # Get review competencies
+POST   /api/settings/competencies               # Create competency (HR Admin only)
+PUT    /api/settings/competencies/{id}          # Update competency (HR Admin only)
+DELETE /api/settings/competencies/{id}          # Delete competency (HR Admin only)
+```
+
+### **Reports & Analytics**
+```
+GET    /api/reports/team-performance            # Team performance report (Manager)
+GET    /api/reports/feedback-analytics          # Feedback analytics report (Manager)
+GET    /api/reports/review-cycle-summary        # Review cycle summary (HR Admin)
+GET    /api/reports/individual-summary          # Individual performance summary
+```
+
+---
+
+## **HTTP Methods & Permissions**
+
+### **Method Conventions**
+- **GET**: Retrieve data (read-only)
+- **POST**: Create new resources
+- **PUT**: Update existing resources
+- **DELETE**: Remove resources
+
+### **Role-Based Access**
+- **HR Admin**: Full access to objectives, review cycles, and company-wide analytics
+- **Manager**: Access to team goals, team feedback, and direct report reviews
+- **Individual Contributor**: Access to assigned tasks, personal feedback, and own reviews
+
+### **Authentication Required**
+All endpoints require valid authentication token except:
+- POST /api/auth/login
+
+### **Error Responses**
+All endpoints return standard HTTP status codes with detailed error messages:
+
+#### **Success Codes**
+- **200**: Success (GET, PUT requests)
+- **201**: Created (POST requests)
+- **204**: No Content (DELETE requests)
+
+#### **Client Error Codes**
+- **400**: Bad Request
+  - Invalid request data
+  - Validation errors
+  - Business rule violations
+- **401**: Unauthorized
+  - Missing or invalid authentication token
+  - Token expired
+- **403**: Forbidden
+  - Insufficient permissions for role
+  - Department access restrictions
+  - Cannot edit overdue items
+- **404**: Not Found
+  - Resource doesn't exist
+  - User doesn't have access to resource
+- **409**: Conflict
+  - Duplicate goal/task titles within parent
+  - Timeline validation failures
+  - Status transition violations
+- **422**: Unprocessable Entity
+  - Business logic constraints violated
+  - Cascade deletion prevented
+
+#### **Server Error Codes**
+- **500**: Internal Server Error
+- **503**: Service Unavailable (maintenance mode)
+
+#### **Error Response Format**
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Goal due date cannot exceed objective end date",
+    "details": {
+      "field": "due_date",
+      "constraint": "timeline_validation",
+      "max_date": "2024-12-31"
+    },
+    "timestamp": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+---
+
+## **API Security & Rate Limiting**
+
+### **Authentication Requirements**
+- All endpoints require valid JWT token except authentication endpoints
+- Token must be included in Authorization header: `Bearer <token>`
+- Tokens expire after 15 minutes (access) / 7 days (refresh)
+
+### **Role-Based Access Control**
+- **HR Admin**: Full access to all endpoints
+- **Manager**: Department-scoped access to team data
+- **Individual Contributor**: Access to own data only
+
+### **Rate Limiting**
+- **Authentication endpoints**: 5 requests per minute per IP
+- **General endpoints**: 100 requests per minute per user
+- **AI endpoints**: 20 requests per minute per user
+- **Export endpoints**: 5 requests per hour per user
+
+### **Data Filtering Rules**
+- **Department Filtering**: Managers can only access users from their department
+- **Team Filtering**: Managers can only manage direct reports
+- **Ownership Filtering**: Users can only edit items they created or are assigned to
+- **Status Filtering**: Cannot edit items with status "completed" or "overdue"
+
+---
+
+## **API Versioning & Deprecation**
+
+### **Current Version**
+- **API Version**: v1
+- **Base URL**: `/api/v1/`
+- **Content-Type**: `application/json`
+
+### **Backward Compatibility**
+- Breaking changes will increment major version
+- Deprecated endpoints will be supported for 6 months
+- New optional fields can be added without version increment
+
+### **Response Headers**
+```
+X-API-Version: 1.0
+X-Rate-Limit-Remaining: 95
+X-Rate-Limit-Reset: 1642234567
+X-Request-ID: uuid-for-debugging
+```
+
+---
+
+## **Business Logic Constraints (API Level)**
+
+### **Timeline Validation**
+- Goal due dates must be ≤ objective end dates
+- Task due dates must be ≤ goal due dates
+- Cannot create items with past due dates
+- Cannot extend deadlines for overdue items
+
+### **Permission Constraints**
+- Managers can only assign goals to direct reports
+- Users cannot give feedback to themselves
+- Cannot edit items after status changes to "in_progress"
+- HR Admin required for objective and review cycle management
+
+### **Data Integrity Rules**
+- Goal titles must be unique within objective
+- Task titles must be unique within goal
+- Progress percentages must be 0-100
+- Cannot delete items with active children
+
+### **Department & Role Constraints**
+- Managers can only access users from their department
+- Individual contributors must have exactly one manager
+- Department managers must have manager or hr_admin role
+- Cannot assign users to departments they don't belong to
+
+---
+
+## **Performance Optimization**
+
+### **Caching Strategy**
+- **Dashboard data**: 5 minute cache
+- **User profiles**: 15 minute cache
+- **Department lists**: 1 hour cache
+- **System settings**: 24 hour cache
+
+### **Pagination**
+- Default page size: 20 items
+- Maximum page size: 100 items
+- Cursor-based pagination for large datasets
+- Include total count in response headers
+
+### **Query Optimization**
+- Use database indexes for all foreign key relationships
+- Implement query result caching for expensive operations
+- Batch API calls where possible
+- Use select_related/prefetch_related for Django ORM
+
+### **Response Optimization**
+- Compress responses with gzip
+- Use ETags for conditional requests
+- Implement partial response fields (?fields=id,name,status)
+- Return minimal data for list endpoints, full data for detail endpoints

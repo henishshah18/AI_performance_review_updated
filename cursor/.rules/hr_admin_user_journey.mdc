@@ -1,0 +1,484 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 🏢 **HR Admin User Journey - AI Performance Review Platform**
+
+## **Quick Navigation**
+- 📋 **Cross-References:** [Manager Journey](mdc:manager_user_journey.mdc) | [Individual Journey](mdc:individual_user_journey.mdc) | [Shared Components](mdc:shared_ui_patterns.mdc)
+- 🎯 **Role Permissions:** Create objectives, manage review cycles, system configuration, company-wide analytics
+- 🔗 **Key Interactions:** Assign objectives to Managers, manage review cycles for all users
+
+---
+
+## **🔐 Authentication & Navigation**
+
+### **Login Flow**
+Success → Redirect to `/admin/dashboard` (HR Admin Dashboard)
+
+### **Navigation Structure**
+```
+Header: ReviewAI Logo | [Give Feedback] → (see shared_ui_patterns.mdc) | Notifications | Profile
+Sidebar: Dashboard | Objectives | Review Cycles | Analytics | Reports | Settings
+```
+
+---
+
+## **📊 HR Admin Dashboard**
+**URL:** `/admin/dashboard` | **Component:** `HRDashboard`
+
+### **Main Content Layout**
+```
+├── Company Overview
+│   ├── Total Employees: [Count]
+│   ├── Active Objectives: [Count]
+│   ├── Overall Completion: [Percentage]
+│   ├── Active Review Cycles: [Count]
+│   └── Department Distribution Chart
+├── Department Summary Cards
+│   ├── Each department card showing:
+│   │   ├── Objective counts and completion rates
+│   │   ├── Employee counts by role
+│   │   ├── Manager-to-IC ratios
+│   │   └── [View Department] action
+├── System Health Status
+│   ├── Recent activity metrics
+│   ├── User engagement scores
+│   ├── System performance indicators
+│   └── Data integrity checks
+├── Recent Activity Feed
+│   ├── Latest objective updates
+│   ├── Review cycle milestones
+│   ├── User registrations
+│   └── System alerts
+└── Quick Actions
+    ├── [Create Objective] → Create Objective Modal
+    ├── [Start Review Cycle] → Review Cycle Creation
+    ├── [View Reports] → /admin/reports
+    └── [System Settings] → /admin/settings
+```
+
+### **Edge Cases**
+- **No departments:** Show setup guide for department creation
+- **No active objectives:** "Create your first company objective to get started"
+- **No employees:** Show onboarding workflow guide
+- **System alerts:** Display urgent notifications with escalation options
+
+### **Data Sources**
+- `GET /api/dashboard/hr-admin`
+- `GET /api/objectives` (company-wide)
+- `GET /api/review-cycles/active`
+- `GET /api/analytics/company-overview`
+
+---
+
+## **🎯 Objectives Management**
+**URL:** `/admin/objectives` | **Component:** `ObjectivesManagement`
+
+### **Objectives Overview**
+```
+Header: "Company Objectives Management" | [Create New Objective]
+
+Filters:
+├── Status: All | Draft | Active | Completed | Cancelled
+├── Department: All | [Department List]
+├── Owner: All | [Manager List]
+├── Timeline: All | Quarterly | Annual
+└── Date Range: Start Date - End Date
+
+Objectives Table:
+Columns: Title | Owner(s) | Department | Progress | Status | Timeline | Actions
+
+Each Row Shows:
+├── Objective title with description tooltip
+├── Assigned manager(s) with department tags
+├── Progress bar with percentage
+├── Status badge → (see shared_ui_patterns.mdc)
+├── Timeline dates with remaining time
+└── Actions: [View] [Edit] [Delete] [Duplicate]
+```
+
+### **Create Objective Modal**
+```
+Form Fields:
+├── Objective Title* (max 100 chars, company-wide unique)
+├── Description (max 500 chars, rich text editor)
+├── Assign to Manager(s)* (multi-select, department-filtered)
+├── Timeline Type* (radio: Quarterly | Annual)
+├── Start Date* (date picker, min: today)
+├── End Date* (auto-calculated based on timeline type)
+├── Department Scope (multi-select departments)
+├── Priority Level (High | Medium | Low)
+└── Success Metrics (optional KPIs)
+
+Validation Rules:
+- Title unique across company
+- At least one manager selected
+- Quarterly = exactly 3 months timeline
+- Annual = exactly 12 months timeline
+- End date auto-calculated from start date + timeline type
+- Managers must be from selected departments
+
+Form Actions:
+├── [Cancel] → Close modal
+├── [Save as Draft] → POST /api/objectives (status: draft)
+├── [Create & Notify] → Create + send notifications to assigned managers
+└── [Schedule Creation] → Set future activation date
+
+Success Flow:
+1. Objective created in system
+2. Assigned managers receive notifications
+3. Managers can start creating goals → (see manager_user_journey.mdc)
+4. Dashboard refreshes with new objective
+```
+
+### **Objective Details Modal**
+```
+Modal Content:
+├── Basic Information Section
+│   ├── Title, description, and metadata
+│   ├── Assigned managers and departments
+│   ├── Timeline and priority information
+│   └── Creation/modification history
+├── Progress Overview
+│   ├── Overall progress with visual indicator
+│   ├── Goals breakdown by manager
+│   ├── Department progress comparison
+│   └── Timeline vs actual progress chart
+├── Goals Management (Read-Only for HR)
+│   ├── All goals under this objective
+│   ├── Goal assignments by manager
+│   ├── Progress status of each goal
+│   └── Individual contributor assignments
+├── Analytics Section
+│   ├── Engagement metrics
+│   ├── Time-to-completion analysis
+│   └── Success pattern insights
+└── Actions: [Close] [Edit] [Generate Report] [Archive]
+```
+
+### **Business Rules**
+- **Cannot delete objectives with active goals** (cascade protection)
+- **Can edit objectives only in Draft status** (active objectives read-only)
+- **Multiple managers allowed** per objective (shared ownership)
+- **Department alignment required** (managers must be from specified departments)
+
+---
+
+## **📋 Review Cycles Management**
+**URL:** `/admin/review-cycles` | **Component:** `ReviewCyclesManagement`
+
+### **Review Cycles Interface**
+```
+Active Cycle Section (if any):
+├── Current cycle overview card
+│   ├── Cycle name, type, and timeline
+│   ├── Progress indicator across all phases
+│   ├── Participation statistics by department
+│   ├── Completion rates and bottlenecks
+│   └── [View Details] [Manage Participants] [End Cycle] buttons
+
+Review History Table:
+Columns: Cycle Name | Type | Period | Status | Participants | Completion Rate | Actions
+
+Review Cycle Details:
+├── Self-Assessment Phase: Progress by department
+├── Peer Review Phase: Completion matrix
+├── Manager Review Phase: Manager workload
+├── Review Meetings: Scheduling status
+└── Final Reports: Generation status
+```
+
+### **Create Review Cycle Modal**
+```
+Basic Information:
+├── Cycle Name* (e.g., "Q4 2024 Performance Review")
+├── Review Type* (Quarterly | Annual | Mid-Year | Custom)
+├── Description (optional context and goals)
+└── Cycle Owner (default: current HR Admin)
+
+Timeline Configuration:
+├── Self-Assessment Period
+│   ├── Start Date* (date picker)
+│   ├── End Date* (date picker, validation: > start date)
+│   └── Reminder Schedule (3 days, 1 day before deadline)
+├── Peer Review Period
+│   ├── Start Date* (auto: self-assessment end + 1 day)
+│   ├── End Date* (date picker)
+│   └── Anonymous Option (checkbox, default: enabled)
+├── Manager Review Period
+│   ├── Start Date* (auto: peer review end + 1 day)
+│   ├── End Date* (date picker)
+│   └── Calibration Meetings (optional date range)
+└── Review Meeting Period
+    ├── Start Date* (auto: manager review end + 1 day)
+    ├── End Date* (date picker)
+    └── Meeting Duration (default: 60 minutes)
+
+Participant Selection:
+├── Department Inclusion
+│   ├── [Select All Departments] (toggle)
+│   ├── Individual department checkboxes
+│   └── Employee count preview per department
+├── Role-Based Exclusions
+│   ├── Exclude probationary employees (< 90 days)
+│   ├── Exclude contractors (checkbox)
+│   └── Custom exclusion rules
+└── Participant Preview
+    ├── Total participants: [Count]
+    ├── Breakdown by role and department
+    └── Estimated workload calculations
+
+Advanced Settings:
+├── Review Visibility (Manager only | HR + Manager | All participants)
+├── Anonymity Rules (Peer reviews, upward feedback)
+├── Calibration Requirements (Manager discussion sessions)
+└── Auto-Reminders (Email schedule configuration)
+
+Validation Rules:
+- Chronological date validation across all phases
+- No overlapping active cycles allowed
+- At least one department selected
+- Minimum 7 days per phase
+- End-to-end cycle cannot exceed 90 days
+
+Actions: [Cancel] [Save as Draft] [Create & Launch] [Schedule Launch]
+```
+
+### **Review Cycle Management**
+```
+Active Cycle Controls:
+├── Phase Management
+│   ├── [Extend Phase Deadline] (emergency extension)
+│   ├── [Send Reminders] (manual reminder triggers)
+│   ├── [View Laggards] (participants behind schedule)
+│   └── [Generate Interim Report] (mid-cycle insights)
+├── Participant Management
+│   ├── [Add Participants] (late joiners, new hires)
+│   ├── [Remove Participants] (role changes, departures)
+│   ├── [Manage Exceptions] (medical leave, extended absence)
+│   └── [View Individual Progress] (per-person status)
+├── Communication Tools
+│   ├── [Send Announcement] (company-wide updates)
+│   ├── [Department Reminders] (targeted communications)
+│   ├── [Manager Briefings] (role-specific instructions)
+│   └── [FAQ Management] (common questions handling)
+└── Quality Control
+    ├── [Review Calibration] (manager alignment checks)
+    ├── [Data Quality Audit] (incomplete/inconsistent reviews)
+    ├── [Conflict Resolution] (escalated issues)
+    └── [Bias Detection] (algorithmic fairness checks)
+```
+
+### **Critical Edge Cases**
+```
+Overlapping Cycles:
+- System prevents creation of overlapping active cycles
+- Show error: "Cannot create overlapping review cycles"
+- Suggest alternative dates based on cycle history
+
+Mid-Cycle Changes:
+- Employee role change → maintain current assignments, update future permissions
+- Manager change → transfer review responsibilities to new manager
+- Department transfer → update participant groupings
+
+Cycle Interruption:
+- System outage → auto-extend deadlines, preserve all submitted data
+- Emergency suspension → pause all timers, maintain submission states
+- Data corruption → rollback capabilities, audit trail preservation
+```
+
+---
+
+## **📊 Company Analytics & Reports**
+**URL:** `/admin/analytics` | **Component:** `CompanyAnalytics`
+
+### **Analytics Dashboard**
+```
+Performance Metrics:
+├── Objective Completion Trends
+│   ├── Company-wide completion rates over time
+│   ├── Department comparison charts
+│   ├── Seasonal pattern analysis
+│   └── Predictive completion forecasting
+├── Goal Achievement Analysis
+│   ├── Goal completion by priority level
+│   ├── Manager effectiveness metrics
+│   ├── Individual contributor performance patterns
+│   └── Bottleneck identification (blocked goals)
+├── Review Cycle Insights
+│   ├── Participation rates by cycle type
+│   ├── Review quality metrics (completion rates, feedback depth)
+│   ├── Manager calibration effectiveness
+│   └── Employee engagement trends
+├── Feedback Analytics
+│   ├── Feedback volume and sentiment analysis
+│   ├── Anonymous vs. attributed feedback patterns
+│   ├── Cross-department collaboration metrics
+│   └── Development opportunity identification
+└── People Analytics
+    ├── Performance distribution curves
+    ├── Career progression tracking
+    ├── Retention correlation with performance
+    └── High performer identification patterns
+```
+
+### **Custom Reports Generator**
+```
+Report Builder:
+├── Data Sources Selection
+│   ├── Objectives (company, department, individual)
+│   ├── Goals and tasks (progress, completion)
+│   ├── Reviews (self, peer, manager assessments)
+│   ├── Feedback (volume, sentiment, themes)
+│   └── People data (roles, departments, tenure)
+├── Filters and Dimensions
+│   ├── Time periods (custom date ranges)
+│   ├── Departments and teams
+│   ├── Role levels and career stages
+│   ├── Performance categories
+│   └── Custom employee segments
+├── Visualization Options
+│   ├── Charts (bar, line, pie, scatter)
+│   ├── Tables (sortable, filterable)
+│   ├── Heatmaps (performance matrices)
+│   └── Dashboards (multi-widget views)
+├── Export and Sharing
+│   ├── PDF reports (executive summaries)
+│   ├── Excel workbooks (detailed data)
+│   ├── PowerPoint presentations (stakeholder decks)
+│   └── Scheduled delivery (automated distribution)
+└── Report Templates
+    ├── Executive Performance Summary
+    ├── Department Performance Review
+    ├── Manager Effectiveness Report
+    ├── Individual Development Plans
+    └── Custom template creation
+```
+
+---
+
+## **⚙️ System Configuration & Settings**
+**URL:** `/admin/settings` | **Component:** `SystemSettings`
+
+### **Platform Configuration**
+```
+User Management:
+├── Role Definitions and Permissions
+├── Department Structure Management
+├── Manager-Employee Relationship Setup
+├── Bulk User Import/Export
+└── Access Control Policies
+
+Performance Management Settings:
+├── Objective Templates and Categories
+├── Goal Progress Calculation Rules
+├── Task Classification and Priorities
+├── Review Cycle Templates
+└── Performance Rating Scales
+
+Communication Settings:
+├── Email Notification Templates
+├── Reminder Schedules and Frequencies
+├── Escalation Procedures
+├── System Announcement Tools
+└── Feedback Collection Rules
+
+Data Management:
+├── Data Retention Policies
+├── Privacy and Anonymity Controls
+├── Audit Trail Configuration
+├── Backup and Recovery Settings
+└── Integration API Management
+```
+
+---
+
+## **🔗 Integration Points**
+
+### **With Managers**
+- **Assigns:** Objectives → triggers Manager notification and `/objectives` access
+- **Receives:** Objective progress updates → reflected in company analytics
+- **Supports:** Goal creation and team management processes
+- **Reviews:** Manager effectiveness and team performance metrics
+
+### **With Individual Contributors**
+- **Enables:** Review cycle participation → Individual gets access to self-assessment
+- **Cannot:** Directly assign goals or tasks (Manager-controlled process)
+- **Monitors:** Individual performance through aggregated analytics
+- **Supports:** Career development and performance improvement initiatives
+
+### **Cross-Role System Management**
+- **Controls:** All system settings and configurations
+- **Monitors:** Platform usage and performance metrics
+- **Manages:** Data integrity and security compliance
+- **Facilitates:** Cross-departmental initiatives and company-wide goals
+
+---
+
+## **⚠️ HR Admin-Specific Edge Cases**
+
+### **Objective Management**
+```
+Cascade Deletion Prevention:
+- Cannot delete objectives with active goals
+- Show error: "Cannot delete objective with 12 active goals"
+- Offer archive option instead of deletion
+
+Manager Assignment Conflicts:
+- Manager leaves during active objective
+- Show reassignment wizard with team transfer options
+- Maintain historical ownership records
+
+Cross-Department Objectives:
+- Multiple departments with different timelines
+- Handle department-specific goal creation
+- Manage varying completion criteria
+```
+
+### **Review Cycle Management**
+```
+Mid-Cycle Organizational Changes:
+- Department restructuring during active cycle
+- Employee transfers between departments
+- Manager role changes and reporting structure updates
+- Maintain cycle integrity while adapting to changes
+
+Data Privacy and Compliance:
+- Anonymous feedback source protection
+- GDPR/data protection compliance
+- Audit trail requirements for sensitive operations
+- Legal hold and data preservation requirements
+
+System Scalability:
+- Large cycle creation (1000+ participants)
+- Bulk operations and data processing
+- Performance optimization for company-wide reports
+- Resource allocation during peak usage periods
+```
+
+### **Analytics and Reporting**
+```
+Data Quality Issues:
+- Incomplete submissions and missing data
+- Inconsistent rating scales across cycles
+- Manager calibration discrepancies
+- Statistical significance for small departments
+
+Privacy and Anonymity:
+- Prevent individual identification in aggregated reports
+- Maintain anonymous feedback confidentiality
+- Handle sensitive performance discussions
+- Balance transparency with privacy protection
+
+Report Accuracy:
+- Real-time data vs. cached analytics
+- Historical data consistency during system updates
+- Cross-departmental comparison fairness
+- Bias detection and mitigation in algorithmic insights
+```
+
+---
+
+**Related Files:** [Manager Journey](mdc:manager_user_journey.mdc) | [Individual Journey](mdc:individual_user_journey.mdc) | [Shared Components](mdc:shared_ui_patterns.mdc)

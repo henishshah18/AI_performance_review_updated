@@ -1,0 +1,450 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 👤 **Individual Contributor User Journey - AI Performance Review Platform**
+
+## **Quick Navigation**
+- 📋 **Cross-References:** [Manager Journey](mdc:manager_user_journey.mdc) | [HR Admin Journey](mdc:hr_admin_user_journey.mdc) | [Shared Components](mdc:shared_ui_patterns.mdc)
+- 🎯 **Role Permissions:** Create tasks for assigned goals, update progress, give/receive feedback
+- 🔗 **Key Interactions:** Receive goals from Manager, participate in review cycles managed by HR Admin
+
+---
+
+## **🔐 Authentication & Navigation**
+
+### **Login Flow**
+Success → Redirect to `/dashboard` (Individual Dashboard)
+
+### **Navigation Structure**
+```
+Header: ReviewAI Logo | [Give Feedback] → (see shared_ui_patterns.mdc) | Notifications | Profile
+Sidebar: Dashboard | My Goals | My Tasks | Feedback | Reviews | My Progress
+```
+
+---
+
+## **📊 Individual Dashboard**
+**URL:** `/dashboard` | **Component:** `IndividualDashboard`
+
+### **Main Content Layout**
+```
+├── Goals Overview
+│   ├── Active Goals: [Count]
+│   ├── Overall Progress: [Percentage] with bar
+│   ├── Goals Due Soon: [Count] with warning
+│   └── Completed This Quarter: [Count]
+├── Task Summary
+│   ├── Due Today: [Count]
+│   ├── In Progress: [Count]
+│   ├── Blocked: [Count] with alert
+│   └── Completed This Week: [Count]
+├── Recent Activity Feed
+│   ├── Latest task updates
+│   ├── Recent feedback received
+│   └── Upcoming review activities
+└── Goal Progress Cards
+    ├── Each assigned goal card
+    ├── Progress bars and percentages
+    ├── Task completion ratios
+    └── [View Details] → /goals/{id}
+```
+
+### **Edge Cases**
+- **No goals:** "No goals assigned. Your manager will assign goals soon."
+- **No tasks:** "Break down your goals into tasks to track progress."
+- **No feedback:** "Feedback helps you grow. Give and receive feedback regularly."
+- **All goals completed:** Show achievement celebration + progress summary
+
+### **Data Sources**
+- `GET /api/dashboard/individual`
+- `GET /api/goals/my-goals`
+- `GET /api/tasks/my-tasks`
+
+---
+
+## **🎯 My Goals Management**
+**URL:** `/goals` | **Component:** `MyGoals`
+
+### **Goals Overview**
+```
+Header: "My Assigned Goals" 
+Filters: All | Not Started | In Progress | Completed | Blocked
+
+Each Goal Card:
+├── Goal title and parent objective link (assigned by Manager)
+├── Status Badge → (see shared_ui_patterns.mdc)
+├── Due date with days remaining
+├── Task Summary:
+│   ├── Total Tasks: [Count]
+│   ├── Completed: [Count]
+│   ├── In Progress: [Count]
+│   └── Blocked: [Count]
+├── Recent Activity
+│   ├── Last update timestamp
+│   └── Manager comments
+└── Actions:
+    ├── [View All Tasks] → /tasks?goal={id}
+    ├── [Add New Task] (if goal not overdue)
+    ├── [Update Progress] → Progress Modal
+    └── [Request Help] → Contact Manager
+```
+
+### **Goal Details Modal**
+```
+Modal Content:
+├── Goal Information (read-only, created by Manager)
+│   ├── Title and description
+│   ├── Parent objective context
+│   ├── Due date and priority
+│   └── Manager assignment details
+├── Progress Section
+│   ├── Overall progress bar
+│   ├── Task completion breakdown
+│   └── Progress history timeline
+├── Tasks List
+│   ├── All tasks with status and progress
+│   └── [Add New Task] button
+└── Actions: [Close] [Add Task] [Update Progress]
+```
+
+### **Business Rules**
+- **Cannot edit goal details** (Manager controls goal parameters)
+- **Can create tasks** for assigned goals only
+- **Cannot add tasks to overdue goals**
+- **Progress auto-calculates** from task completion
+
+---
+
+## **✅ My Tasks Management**
+**URL:** `/tasks` | **Component:** `MyTasks`
+
+### **Tasks Interface**
+```
+Header: "My Tasks" | [Create New Task] | View Toggle: Table | Cards
+
+Filters:
+├── Goal: All | [User's Goal List]
+├── Status: All | Not Started | In Progress | Completed | Blocked
+├── Due Date: All | Today | This Week | Overdue
+└── Priority: All | High | Medium | Low
+
+Table View:
+Columns: Task Title | Parent Goal | Progress | Status | Due Date | Evidence | Actions
+
+Card View - Each Task Card:
+├── Task title and parent goal link
+├── Status badge and progress indicator  
+├── Due date and priority level
+├── Evidence links count
+└── Actions: [Update Progress] [Add Evidence] [Edit] [Complete]
+```
+
+### **Create Task Modal**
+```
+Form Fields:
+├── Task Title* (max 100 chars, unique within goal)
+├── Description (optional)
+├── Parent Goal* (dropdown from assigned goals)
+├── Due Date* (max: parent goal due date)
+├── Priority: High | Medium | Low
+└── Initial Progress: 0-100% slider
+
+Validation:
+- Task title unique within goal
+- Due date cannot exceed goal due date
+- Must select parent goal from assigned goals
+- Cannot create tasks for overdue goals
+
+Actions: [Cancel] [Save Task] [Save & Add Another]
+Success: Task created + goal progress recalculated
+```
+
+### **Progress Update Modal**
+```
+Current State Display:
+├── Task title and parent goal
+├── Current progress percentage
+├── Last update date
+└── Previous update history
+
+Update Section:
+├── Progress Slider (0-100%)
+├── Status: Not Started | In Progress | Completed | Blocked
+├── Update Notes (textarea)
+├── Evidence Links (multiple URL inputs)
+└── [Add Evidence Link] button
+
+If Status = Blocked:
+├── Blocker Description* (required)
+├── [Notify Manager] (auto-checked)
+└── Help Request Message
+
+Actions: [Cancel] [Save Update] [Save & Notify Manager]
+Success: Progress updated + goal progress recalculated + manager notified if blocked
+```
+
+### **Task Constraints**
+- **Cannot create tasks** without assigned goals
+- **Task due date ≤ goal due date** (validation enforced)
+- **Overdue tasks cannot be updated** (show expired status)
+- **100% progress auto-marks** task as completed
+
+---
+
+## **💬 Feedback Management**
+**URL:** `/feedback` | **Component:** `IndividualFeedback`
+
+### **Tab Navigation**
+```
+├── Received Feedback (active)
+├── Given Feedback  
+└── Give Feedback → (uses shared_ui_patterns.mdc Global Feedback Modal)
+```
+
+### **Received Feedback Tab**
+```
+├── Feedback Summary
+│   ├── Total Received (30 days): [Count]
+│   ├── By Type: [Commendation/Guidance/Constructive]
+│   └── Response Rate: [Percentage]
+├── Feedback Timeline
+│   ├── Recent feedback with sender info
+│   ├── Feedback content and tags
+│   ├── Related goals/objectives context
+│   └── [Reply] [Thank] actions
+└── Anonymous Feedback Section
+    ├── Anonymous feedback content (no sender)
+    ├── Related context if available
+    └── [Acknowledge] button
+```
+
+### **Given Feedback Tab**
+```
+├── Feedback Given Summary
+│   ├── Total Given (30 days): [Count]
+│   ├── Recipients breakdown
+│   └── Response/Acknowledgment rates
+├── Sent Feedback History
+│   ├── Feedback content and recipients
+│   ├── Send date and type
+│   ├── Recipient responses
+│   └── [View Thread] actions
+└── Pending Requests
+    ├── Manager feedback requests
+    ├── Peer review requests
+    └── [Complete] buttons
+```
+
+### **Cross-Role Interactions**
+- **Can give feedback to anyone** (not role-restricted)
+- **Receives feedback from Manager, peers, and anonymous sources**
+- **Cannot see anonymous feedback senders** (privacy protected)
+
+---
+
+## **📝 Reviews & Self-Assessment**
+**URL:** `/reviews` | **Component:** `IndividualReviews`
+
+### **Active Review Cycle Section**
+```
+Current Cycle Info (if active, managed by HR Admin):
+├── Cycle name and timeline
+├── Current phase indicator
+├── My progress across review phases
+└── Time remaining for current phase
+
+My Review Status:
+├── Self-Assessment: Complete/Pending
+│   └── [Complete Assessment] → /reviews/self-assessment
+├── Peer Reviews to Complete: [Count]
+│   └── [Complete Reviews] → /reviews/peer-reviews
+├── Manager Review: Pending/Scheduled/Complete
+│   └── [View Results] (if complete)
+└── Review Meeting: Scheduled/Pending
+    └── [Schedule Meeting] or meeting details
+```
+
+### **Self-Assessment Form**
+**URL:** `/reviews/self-assessment` | **Component:** `SelfAssessment`
+
+```
+Assessment Sections:
+├── Goal Achievement Review
+│   ├── Each assigned goal with self-rating
+│   ├── Achievement description
+│   ├── Evidence/examples
+│   └── Challenges faced
+├── Skills & Competencies
+│   ├── Core competency self-ratings
+│   ├── Skill development highlights
+│   └── Areas for improvement
+├── Professional Development
+│   ├── Learning achievements
+│   ├── Career goals progress
+│   └── Future development plans
+└── Overall Reflection
+    ├── Key accomplishments
+    ├── Major learnings
+    └── Goals for next period
+
+Form Actions:
+├── [Save Draft] (auto-save every 2 minutes)
+├── [Preview] → Review before submit
+└── [Submit Assessment] → Final submission
+```
+
+### **Peer Review Interface**
+```
+Peer Review Assignments (determined by Manager/HR):
+├── Each peer to review
+│   ├── Working relationship context
+│   ├── Collaboration feedback form
+│   ├── Strengths and development areas
+│   └── Anonymous option checkbox
+├── Review Questions
+│   ├── Collaboration effectiveness
+│   ├── Communication skills
+│   ├── Technical competency
+│   └── Team contribution
+└── [Submit All Reviews] button
+
+Privacy Controls:
+├── Anonymous submission toggle
+├── Review visibility settings
+└── Confidential comments section (Manager/HR only)
+```
+
+### **Review Constraints**
+- **Cannot submit after deadline** (form becomes read-only)
+- **Cannot edit after submission** (show submitted status)
+- **Anonymous peer reviews** hide reviewer identity
+
+---
+
+## **📈 My Progress & Analytics**
+**URL:** `/progress` | **Component:** `MyProgress`
+
+### **Personal Analytics Dashboard**
+```
+├── Goals Performance
+│   ├── Completion rate over time
+│   ├── Goals by status breakdown
+│   ├── Average completion time
+│   └── Success rate by priority
+├── Task Management
+│   ├── Task creation vs completion
+│   ├── Productivity trends
+│   ├── Blocker frequency analysis
+│   └── Evidence submission rate
+├── Feedback Insights
+│   ├── Feedback themes over time
+│   ├── Top strengths mentioned
+│   ├── Development areas
+│   └── Feedback engagement score
+└── Career Development
+    ├── Skill progression tracking
+    ├── Learning milestones
+    ├── Review performance history
+    └── Goal achievement patterns
+```
+
+### **Progress Insights**
+```
+Personal Recommendations:
+├── "Focus on high-priority tasks"
+├── "Improve task breakdown for better progress tracking"
+├── "Request more frequent feedback from Manager"
+└── "Document evidence for goal achievements"
+
+Performance Trends:
+├── Weekly progress velocity
+├── Goal completion patterns
+├── Peak productivity periods
+└── Common blocker types
+```
+
+---
+
+## **🔗 Integration Points**
+
+### **With Manager**
+- **Receives:** Goal assignments → notification + `/goals` update
+- **Sends:** Task progress updates → reflected in Manager's goal tracking
+- **Requests:** Help for blocked tasks → Manager notification
+- **Participates:** Manager reviews during review cycles
+
+### **With HR Admin**
+- **Participates:** Review cycles created by HR Admin
+- **Cannot:** Access company-wide data or system settings
+- **Receives:** System announcements and policy updates
+
+### **Cross-Role Permissions**
+- **Can manage:** Own tasks and progress only
+- **Can view:** Own goals, tasks, feedback, and progress data
+- **Cannot access:** Other individuals' data, team management features
+
+---
+
+## **⚠️ Individual-Specific Edge Cases**
+
+### **Goal & Task Management**
+```
+No Assigned Goals:
+- Show "No goals assigned" message
+- Disable task creation
+- Contact Manager for goal assignment
+
+Overdue Goals:
+- Show red warning indicators
+- Disable new task creation
+- Show "Goal overdue - contact Manager" message
+
+Task Due Date Conflicts:
+- Prevent task due dates beyond goal timeline
+- Auto-validate date constraints in task creation
+```
+
+### **Progress Tracking**
+```
+Blocked Tasks:
+- Require blocker description
+- Auto-notify Manager option
+- Show escalation timeline
+
+Progress Calculation Mismatch:
+- Real-time recalculation on task updates
+- Show progress breakdown in goal details
+- Handle edge cases (deleted/modified tasks)
+```
+
+### **Review Participation**
+```
+Late Review Submission:
+- Show deadline warnings 3 days before
+- Disable form after deadline
+- Show "Review period ended" message
+
+Mid-Cycle Role Change:
+- Maintain review assignments
+- Update permissions for new role
+- Preserve historical review data
+```
+
+### **Feedback & Development**
+```
+Anonymous Feedback Handling:
+- Hide sender identity completely
+- Show context clues if relevant
+- Maintain feedback thread continuity
+
+Performance Concerns:
+- Show improvement resources
+- Suggest Manager meetings
+- Track development plan progress
+```
+
+---
+
+**Related Files:** [Manager Journey](mdc:manager_user_journey.mdc) | [HR Admin Journey](mdc:hr_admin_user_journey.mdc) | [Shared Components](mdc:shared_ui_patterns.mdc)

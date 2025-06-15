@@ -1,0 +1,165 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Backend Structure (MVP)
+
+**This guide is the single source of truth for building the backend. Do not assume or improvise beyond what's written here. If any ambiguity arises, escalate it before implementation.**
+
+## 1. Framework
+
+Django: High-level Python web framework for rapid development and clean design
+Follows Model-View-Controller (MVC) architectural pattern
+Built-in ORM (Object-Relational Mapping) for database abstraction
+Automatic admin interface for CRUD functionality
+
+### Required Dependencies
+Django==4.2.0
+djangorestframework==3.14.0
+django-cors-headers==4.0.0
+djangorestframework-simplejwt==5.2.2
+psycopg2-binary==2.9.6
+python-decouple==3.8
+openai==0.27.7
+
+## 2. Database
+
+PostgreSQL: Powerful, open-source, object-relational database system
+Utilizes Supabase, an open-source Firebase alternative, for managed PostgreSQL hosting
+Supabase provides additional features like real-time subscriptions, authentication, and storage
+Django integrates with Supabase using the psycopg2 database adapter
+Refer to the separate "Database Schema" document for detailed table structure and indexing
+
+## 3. ORM (Object-Relational Mapping)
+
+Django's built-in ORM for database abstraction and interaction
+Provides a high-level, Pythonic way to define database models
+Supports database migrations for schema changes and version control
+Offers powerful querying capabilities and database-agnostic API
+Integrates seamlessly with Django's features like admin interface and forms
+
+## 4. Authentication & Authorization
+- Django's built-in authentication system for user management and login/logout functionality
+- Token-based authentication using `django-rest-framework-simplejwt` for API authentication
+- **JWT Token Expiry**: Access = 15 minutes, Refresh = 7 days
+- Role-based access control (RBAC) using Django's permission system
+- Custom middleware or decorators for enforcing authentication and authorization checks
+- **Roles**: `hr_admin`, `manager`, `individual_contributor`
+
+## 5. Third-Party Integrations
+- **OpenAI API**: For AI-powered review generation and sentiment analysis
+ - Generate review drafts (peer, manager, self-assessments)
+ - Analyze sentiment for feedback and reviews
+ - Uses GPT-4 model
+
+## 6. Security Measures
+- HTTPS for encrypting data in transit
+- Cross-Site Request Forgery (CSRF) protection using Django's built-in mechanisms
+- Input validation and sanitization to prevent common web vulnerabilities
+- Secure password storage using Django's password hashing functionality
+- Secure session management practices
+- Regular security updates for Django and its dependencies
+- Logging and monitoring for detecting and responding to security incidents
+- **CORS**: Configured for frontend at `http://localhost:3000`
+
+## 7. Error Handling and Logging
+- Consistent error handling and error response formats across API endpoints
+- Django's built-in logging framework for logging errors, warnings, and events
+- Structured logging formats (e.g., JSON) for log aggregation and analysis
+- Error monitoring and alerting tools (e.g., Sentry, Rollbar) for proactive issue resolution
+- **HTTP Status Codes**: 200, 201, 400, 401, 403, 404, 409, 422, 500
+
+### Standard API Response Format
+Success Response:
+{
+   "success": true,
+   "data": {},
+   "message": "Optional success message"
+}
+
+Error Response:
+{
+   "success": false,
+   "error": {
+       "code": "ERROR_CODE",
+       "message": "Human readable error message",
+       "details": {}
+   }
+}
+
+## 8. Testing
+- Unit tests for verifying individual component behavior
+- Integration tests for testing module and service interactions
+- Testing frameworks (e.g., pytest, Django's built-in testing tools) for automated testing
+- Code quality checks, linting, and static analysis
+- **Minimum coverage**: 80%
+
+## 9. API Endpoints
+- Refer to the separate "API Endpoints" document for the detailed list of endpoints and their specifications
+- Implement the endpoints using Django views and serializers
+- Use Django REST Framework for building RESTful APIs
+- Ensure proper authentication, authorization, and error handling for each endpoint
+- **All endpoints require authentication except** `/api/auth/login`
+
+## 10. Project Structure
+performance_management/
+├── apps/
+│   ├── authentication/
+│   ├── okr/
+│   ├── feedback/
+│   ├── reviews/
+│   ├── analytics/
+│   └── ai_integration/
+├── requirements.txt
+├── .env.example
+└── manage.py
+
+## 11. Environment Configuration
+.env.example:
+SECRET_KEY=your-secret-key-here
+DEBUG=True
+DIRECT_URL='postgres_direct_url'
+DATABASE_URL='postgres_database_url'
+OPENAI_API_KEY=your-openai-api-key
+AI_FEATURES_ENABLED=True
+FRONTEND_URL=http://localhost:3000
+
+## 12. Initial Setup Commands
+1. Create virtual environment: python -m venv venv
+2. Activate environment: source venv/bin/activate (Windows: venv\Scripts\activate)
+3. Install dependencies: pip install -r requirements.txt
+4. Create .env file: cp .env.example .env
+5. Create Django apps:
+  - python manage.py startapp authentication
+  - python manage.py startapp okr
+  - python manage.py startapp feedback
+  - python manage.py startapp reviews
+  - python manage.py startapp analytics
+  - python manage.py startapp ai_integration
+6. Run migrations: python manage.py makemigrations && python manage.py migrate
+7. Create superuser: python manage.py createsuperuser
+8. Run development server: python manage.py runserver
+
+## 13. Business Rules
+- **Role-based data access**: HR Admin sees all, Managers see team data, Individuals see own data
+- **Objective ownership**: Only managers can own objectives
+- **Goal assignment**: Goals can only be assigned to users by their managers
+- **Task ownership**: Tasks are always assigned to individual contributors
+- **Review cycles**: Only one active cycle at a time
+- **Progress calculation**: Tasks → Goals → Objectives (automatic rollup)
+- **Feedback visibility**: Private feedback only visible to giver and receiver
+- **AI features**: Available to all authenticated users when enabled
+- **Data validation**: All date ranges must be valid (end date > start date)
+- **Status transitions**: Enforce valid status transitions
+
+This backend structure document provides a streamlined overview of the key components and considerations for your MVP. It focuses on the essential aspects, such as the framework, database, authentication and authorization, third-party integrations, security measures, error handling and logging, and testing.
+
+The separate "Database Schema" and "API Endpoints" documents complement this backend structure by providing detailed information about the database tables, indexes, and API endpoints. Make sure to refer to those documents while implementing the backend.
+
+Remember to keep the backend implementation modular, maintainable, and aligned with the project requirements. Regularly review and update the backend structure as your MVP evolves and new features are added.

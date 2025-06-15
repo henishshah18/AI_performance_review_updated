@@ -1,0 +1,776 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Database Schema - Performance Management Web Application
+
+## **Schema Overview**
+
+This database schema supports a performance management platform with three main features:
+1. **OKR & Goal Management** - 3-level hierarchy (Objectives → Goals → Individual Tasks)
+2. **Continuous Feedback** - Real-time feedback between team members
+3. **Performance Reviews (360°)** - Quarterly/annual review cycles with self, peer, manager, and upward reviews
+
+---
+
+## **Core Tables**
+
+### 1. users
+| Field Name   | Data Type    | Constraints                    | Description                                    |
+|--------------|--------------|--------------------------------|------------------------------------------------|
+| id           | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for user                     |
+| email        | VARCHAR(255) | UNIQUE, NOT NULL               | User's email address                           |
+| first_name   | VARCHAR(100) | NOT NULL                       | User's first name                              |
+| last_name    | VARCHAR(100) | NOT NULL                       | User's last name                               |
+| role         | ENUM         | NOT NULL                       | hr_admin, manager, individual_contributor      |
+| manager_id   | UUID         | FOREIGN KEY (users.id), NULL   | Reference to user's manager (NULL for top-level managers) |
+| department_id| UUID         | FOREIGN KEY (departments.id)   | Department reference                           |
+| phone        | VARCHAR(20)  | NULL                           | User's phone number                            |
+| role_title   | VARCHAR(100) | NULL                           | User's job title                               |
+| bio          | TEXT         | NULL                           | User's bio/description                         |
+| skills       | TEXT[]       | NULL                           | Array of user skills                           |
+| is_active    | BOOLEAN      | DEFAULT true                   | Whether user account is active                 |
+| created_at   | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at   | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+### 1.1. departments
+| Field Name     | Data Type    | Constraints                    | Description                                    |
+|----------------|--------------|--------------------------------|------------------------------------------------|
+| id             | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for department               |
+| name           | VARCHAR(100) | UNIQUE, NOT NULL               | Department name                                |
+| description    | TEXT         | NULL                           | Department description                         |
+| manager_id     | UUID         | FOREIGN KEY (users.id)         | Department manager                             |
+| is_active      | BOOLEAN      | DEFAULT true                   | Whether department is active                   |
+| created_at     | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Department creation timestamp                  |
+| updated_at     | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Department last update timestamp               |
+
+### 1.2. notifications
+| Field Name           | Data Type    | Constraints                    | Description                                    |
+|----------------------|--------------|--------------------------------|------------------------------------------------|
+| id                   | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for notification             |
+| recipient_id         | UUID         | FOREIGN KEY (users.id)         | User receiving notification                    |
+| type                 | ENUM         | NOT NULL                       | goal_assigned, task_updated, feedback_received, review_deadline, etc. |
+| title                | VARCHAR(255) | NOT NULL                       | Notification title                             |
+| message              | TEXT         | NOT NULL                       | Notification content                           |
+| related_entity_type  | ENUM         | NULL                           | objective, goal, task, feedback, review        |
+| related_entity_id    | UUID         | NULL                           | ID of related entity                           |
+| is_read              | BOOLEAN      | DEFAULT false                  | Whether notification was read                  |
+| priority             | ENUM         | DEFAULT 'normal'               | low, normal, high, urgent                      |
+| created_at           | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Notification creation timestamp                |
+| read_at              | TIMESTAMP    | NULL                           | When notification was marked as read           |
+
+### 1.3. system_settings
+| Field Name     | Data Type    | Constraints                    | Description                                    |
+|----------------|--------------|--------------------------------|------------------------------------------------|
+| id             | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for setting                  |
+| setting_key    | VARCHAR(100) | UNIQUE, NOT NULL               | Setting identifier (e.g., "ai_features_enabled") |
+| setting_value  | TEXT         | NOT NULL                       | Setting value (JSON for complex values)       |
+| data_type      | ENUM         | NOT NULL                       | boolean, string, integer, json                 |
+| description    | TEXT         | NULL                           | Setting description                            |
+| created_by     | UUID         | FOREIGN KEY (users.id)         | HR Admin who set the value                     |
+| updated_at     | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Last update timestamp                          |
+
+---
+
+## **Module 1: OKR & Goal Management Tables**
+
+### 2. objectives
+| Field Name          | Data Type     | Constraints                    | Description                                    |
+|---------------------|---------------|--------------------------------|------------------------------------------------|
+| id                  | UUID          | PRIMARY KEY, AUTO GENERATE     | Unique identifier for objective                |
+| title               | VARCHAR(255)  | NOT NULL                       | Objective title                                |
+| description         | TEXT          | NULL                           | Detailed objective description                 |
+| owner_id            | UUID          | FOREIGN KEY (users.id)         | Manager who owns this objective                |
+| status              | ENUM          | DEFAULT 'draft'                | draft, active, completed, cancelled            |
+| priority            | ENUM          | DEFAULT 'medium'               | low, medium, high                              |
+| timeline_type       | ENUM          | NOT NULL                       | quarterly, annual                              |
+| start_date          | DATE          | NOT NULL                       | Objective start date                           |
+| end_date            | DATE          | NOT NULL                       | Objective end date                             |
+| success_metrics     | TEXT          | NULL                           | KPIs and success criteria                      |
+| progress_percentage | DECIMAL(5,2)  | DEFAULT 0.00                   | Overall progress (0.00 to 100.00)             |
+| created_at          | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at          | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+### 3. goals
+| Field Name          | Data Type     | Constraints                    | Description                                    |
+|---------------------|---------------|--------------------------------|------------------------------------------------|
+| id                  | UUID          | PRIMARY KEY, AUTO GENERATE     | Unique identifier for goal                     |
+| objective_id        | UUID          | FOREIGN KEY (objectives.id)    | Parent objective reference                     |
+| title               | VARCHAR(255)  | NOT NULL                       | Goal title                                     |
+| description         | TEXT          | NULL                           | Detailed goal description                      |
+| assigned_to         | UUID          | FOREIGN KEY (users.id)         | User assigned to this goal                     |
+| created_by          | UUID          | FOREIGN KEY (users.id)         | Manager who created the goal                   |
+| status              | ENUM          | DEFAULT 'not_started'          | not_started, in_progress, completed, blocked  |
+| priority            | ENUM          | DEFAULT 'medium'               | low, medium, high                              |
+| due_date            | DATE          | NULL                           | Goal due date                                  |
+| progress_percentage | DECIMAL(5,2)  | DEFAULT 0.00                   | Goal progress (0.00 to 100.00)                |
+| created_at          | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at          | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+### 4. individual_tasks
+| Field Name          | Data Type     | Constraints                    | Description                                    |
+|---------------------|---------------|--------------------------------|------------------------------------------------|
+| id                  | UUID          | PRIMARY KEY, AUTO GENERATE     | Unique identifier for task                     |
+| goal_id             | UUID          | FOREIGN KEY (goals.id)         | Parent goal reference                          |
+| title               | VARCHAR(255)  | NOT NULL                       | Task title                                     |
+| description         | TEXT          | NULL                           | Detailed task description                      |
+| assigned_to         | UUID          | FOREIGN KEY (users.id)         | User assigned to this task                     |
+| status              | ENUM          | DEFAULT 'not_started'          | not_started, in_progress, completed, blocked  |
+| priority            | ENUM          | DEFAULT 'medium'               | low, medium, high                              |
+| due_date            | DATE          | NULL                           | Task due date                                  |
+| progress_percentage | DECIMAL(5,2)  | DEFAULT 0.00                   | Task progress (0.00 to 100.00)                |
+| blocker_description | TEXT          | NULL                           | Description when task is blocked               |
+| evidence_links      | TEXT[]        | NULL                           | Array of URLs/links as evidence                |
+| created_at          | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at          | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+### 5. task_updates
+| Field Name         | Data Type    | Constraints                    | Description                                    |
+|--------------------|--------------|--------------------------------|------------------------------------------------|
+| id                 | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for update                   |
+| task_id            | UUID         | FOREIGN KEY (individual_tasks.id) | Task being updated                         |
+| updated_by         | UUID         | FOREIGN KEY (users.id)         | User who made the update                       |
+| previous_progress  | DECIMAL(5,2) | NULL                           | Progress before update                         |
+| new_progress       | DECIMAL(5,2) | NULL                           | Progress after update                          |
+| update_note        | TEXT         | NULL                           | Notes about the update                         |
+| evidence_links     | TEXT[]       | NULL                           | Array of URLs/links as evidence                |
+| created_at         | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Update timestamp                               |
+
+---
+
+## **Module 2: Continuous Feedback Tables**
+
+### 6. feedback
+| Field Name           | Data Type    | Constraints                    | Description                                    |
+|----------------------|--------------|--------------------------------|------------------------------------------------|
+| id                   | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for feedback                 |
+| from_user_id         | UUID         | FOREIGN KEY (users.id)         | User giving feedback                           |
+| to_user_id           | UUID         | FOREIGN KEY (users.id)         | User receiving feedback                        |
+| feedback_type        | ENUM         | NOT NULL                       | commendation, guidance, constructive           |
+| visibility           | ENUM         | DEFAULT 'private'              | private, public                                |
+| content              | TEXT         | NOT NULL                       | Feedback content                               |
+| related_objective_id | UUID         | FOREIGN KEY (objectives.id)    | Related objective (optional)                   |
+| related_goal_id      | UUID         | FOREIGN KEY (goals.id)         | Related goal (optional)                        |
+| related_task_id      | UUID         | FOREIGN KEY (individual_tasks.id) | Related task (optional)                     |
+| sentiment_analyzed   | BOOLEAN      | DEFAULT false                  | Whether AI sentiment analysis was performed    |
+| created_at           | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Feedback creation timestamp                    |
+| updated_at           | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Feedback last update timestamp                 |
+
+### 7. feedback_tags
+| Field Name  | Data Type    | Constraints                    | Description                                    |
+|-------------|--------------|--------------------------------|------------------------------------------------|
+| id          | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for tag association          |
+| feedback_id | UUID         | FOREIGN KEY (feedback.id)      | Feedback being tagged                          |
+| tag_name    | VARCHAR(100) | NOT NULL                       | Tag name (e.g., collaboration, technical-excellence) |
+| created_at  | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Tag assignment timestamp                       |
+
+### 8. feedback_comments
+| Field Name  | Data Type | Constraints                    | Description                                    |
+|-------------|-----------|--------------------------------|------------------------------------------------|
+| id          | UUID      | PRIMARY KEY, AUTO GENERATE     | Unique identifier for comment                  |
+| feedback_id | UUID      | FOREIGN KEY (feedback.id)      | Feedback being commented on                    |
+| comment_by  | UUID      | FOREIGN KEY (users.id)         | User making the comment                        |
+| content     | TEXT      | NOT NULL                       | Comment content                                |
+| created_at  | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP      | Comment creation timestamp                     |
+
+### 8.1. feedback_tag_templates
+| Field Name    | Data Type    | Constraints                    | Description                                    |
+|---------------|--------------|--------------------------------|------------------------------------------------|
+| id            | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for tag template             |
+| name          | VARCHAR(100) | UNIQUE, NOT NULL               | Tag name (e.g., "Communication", "Leadership") |
+| description   | TEXT         | NULL                           | Tag description and usage guidelines           |
+| category      | ENUM         | NOT NULL                       | skill, behavior, value, competency             |
+| is_active     | BOOLEAN      | DEFAULT true                   | Whether tag is available for use               |
+| created_by    | UUID         | FOREIGN KEY (users.id)         | HR Admin who created the tag                   |
+| created_at    | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Tag creation timestamp                         |
+| updated_at    | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Tag last update timestamp                      |
+
+### 8.2. peer_review_assignments
+| Field Name    | Data Type    | Constraints                    | Description                                    |
+|---------------|--------------|--------------------------------|------------------------------------------------|
+| id            | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for assignment               |
+| reviewee_id   | UUID         | FOREIGN KEY (users.id)         | User being reviewed                            |
+| reviewer_id   | UUID         | FOREIGN KEY (users.id)         | User conducting review                         |
+| review_cycle  | VARCHAR(100) | NOT NULL                       | Review cycle identifier (e.g., "Q4-2024")     |
+| status        | ENUM         | DEFAULT 'pending'              | pending, in_progress, completed, declined      |
+| due_date      | DATE         | NOT NULL                       | Review completion deadline                     |
+| created_by    | UUID         | FOREIGN KEY (users.id)         | HR Admin who created assignment                |
+| completed_at  | TIMESTAMP    | NULL                           | When review was completed                      |
+| created_at    | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Assignment creation timestamp                  |
+| updated_at    | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Assignment last update timestamp               |
+
+---
+
+## **Module 3: Performance Reviews (360°) Tables**
+
+### 9. review_cycles
+| Field Name       | Data Type    | Constraints                    | Description                                    |
+|------------------|--------------|--------------------------------|------------------------------------------------|
+| id               | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for review cycle            |
+| name             | VARCHAR(255) | NOT NULL                       | Review cycle name (e.g., "Q1 2025 Performance Review") |
+| review_type      | ENUM         | NOT NULL                       | quarterly, half_yearly, annual                 |
+| review_period_start | DATE      | NOT NULL                       | Start date of period being reviewed           |
+| review_period_end   | DATE      | NOT NULL                       | End date of period being reviewed             |
+| self_assessment_start | DATE    | NOT NULL                       | When self-assessments open                    |
+| self_assessment_end   | DATE    | NOT NULL                       | When self-assessments close                   |
+| peer_review_start    | DATE     | NOT NULL                       | When peer reviews open                        |
+| peer_review_end      | DATE     | NOT NULL                       | When peer reviews close                       |
+| manager_review_start | DATE     | NOT NULL                       | When manager reviews open                     |
+| manager_review_end   | DATE     | NOT NULL                       | When manager reviews close                    |
+| status           | ENUM         | DEFAULT 'draft'                | draft, active, completed, cancelled            |
+| created_by       | UUID         | FOREIGN KEY (users.id)         | User who created the cycle                     |
+| created_at       | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at       | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+### 10. review_participants
+| Field Name    | Data Type | Constraints                    | Description                                    |
+|---------------|-----------|--------------------------------|------------------------------------------------|
+| id            | UUID      | PRIMARY KEY, AUTO GENERATE     | Unique identifier for participation           |
+| cycle_id      | UUID      | FOREIGN KEY (review_cycles.id) | Review cycle reference                         |
+| user_id       | UUID      | FOREIGN KEY (users.id)         | User participating in review                   |
+| is_active     | BOOLEAN   | DEFAULT true                   | Whether user is active in this cycle          |
+| created_at    | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+
+### 11. self_assessments
+| Field Name          | Data Type    | Constraints                    | Description                                    |
+|---------------------|--------------|--------------------------------|------------------------------------------------|
+| id                  | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for self-assessment         |
+| cycle_id            | UUID         | FOREIGN KEY (review_cycles.id) | Review cycle reference                         |
+| user_id             | UUID         | FOREIGN KEY (users.id)         | User completing self-assessment                |
+| status              | ENUM         | DEFAULT 'not_started'          | not_started, in_progress, completed           |
+| technical_excellence | INTEGER     | NULL                           | Rating 1-5 for technical excellence           |
+| technical_examples  | TEXT         | NULL                           | Examples for technical excellence              |
+| collaboration       | INTEGER      | NULL                           | Rating 1-5 for collaboration                  |
+| collaboration_examples | TEXT      | NULL                           | Examples for collaboration                     |
+| problem_solving     | INTEGER      | NULL                           | Rating 1-5 for problem solving                |
+| problem_solving_examples | TEXT    | NULL                           | Examples for problem solving                   |
+| initiative          | INTEGER      | NULL                           | Rating 1-5 for initiative                     |
+| initiative_examples | TEXT         | NULL                           | Examples for initiative                        |
+| development_goals   | TEXT         | NULL                           | Development goals for next period              |
+| manager_support_needed | TEXT      | NULL                           | Support needed from manager                    |
+| career_interests    | TEXT         | NULL                           | Career growth interests                        |
+| sentiment_analyzed  | BOOLEAN      | DEFAULT false                  | Whether AI sentiment analysis was performed    |
+| submitted_at        | TIMESTAMP    | NULL                           | When assessment was submitted                  |
+| created_at          | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at          | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+### 12. goal_assessments
+| Field Name     | Data Type    | Constraints                    | Description                                    |
+|----------------|--------------|--------------------------------|------------------------------------------------|
+| id             | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for goal assessment         |
+| self_assessment_id | UUID     | FOREIGN KEY (self_assessments.id) | Parent self-assessment                     |
+| goal_id        | UUID         | FOREIGN KEY (goals.id)         | Goal being assessed                            |
+| self_rating    | ENUM         | NULL                           | exceeded, met, partially_met, not_met          |
+| accomplishments | TEXT        | NULL                           | What was accomplished                          |
+| evidence_links | TEXT[]       | NULL                           | Array of evidence URLs                         |
+| created_at     | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at     | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+### 13. peer_reviews
+| Field Name           | Data Type    | Constraints                    | Description                                    |
+|----------------------|--------------|--------------------------------|------------------------------------------------|
+| id                   | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for peer review             |
+| cycle_id             | UUID         | FOREIGN KEY (review_cycles.id) | Review cycle reference                         |
+| reviewer_id          | UUID         | FOREIGN KEY (users.id)         | User giving the review                         |
+| reviewee_id          | UUID         | FOREIGN KEY (users.id)         | User being reviewed                            |
+| is_anonymous         | BOOLEAN      | DEFAULT true                   | Whether review is anonymous                    |
+| status               | ENUM         | DEFAULT 'not_started'          | not_started, in_progress, completed           |
+| collaboration_rating | INTEGER      | NULL                           | Rating 1-5 for collaboration                  |
+| collaboration_examples | TEXT       | NULL                           | Examples of collaboration                      |
+| impact_rating        | INTEGER      | NULL                           | Rating 1-5 for impact                         |
+| impact_examples      | TEXT         | NULL                           | Examples of impact                             |
+| development_suggestions | TEXT      | NULL                           | Suggestions for development                    |
+| strengths_to_continue | TEXT        | NULL                           | Strengths to continue                          |
+| sentiment_analyzed   | BOOLEAN      | DEFAULT false                  | Whether AI sentiment analysis was performed    |
+| submitted_at         | TIMESTAMP    | NULL                           | When review was submitted                      |
+| created_at           | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at           | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+### 14. manager_reviews
+| Field Name          | Data Type    | Constraints                    | Description                                    |
+|---------------------|--------------|--------------------------------|------------------------------------------------|
+| id                  | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for manager review          |
+| cycle_id            | UUID         | FOREIGN KEY (review_cycles.id) | Review cycle reference                         |
+| manager_id          | UUID         | FOREIGN KEY (users.id)         | Manager giving the review                      |
+| employee_id         | UUID         | FOREIGN KEY (users.id)         | Employee being reviewed                        |
+| status              | ENUM         | DEFAULT 'not_started'          | not_started, in_progress, completed           |
+| overall_rating      | ENUM         | NULL                           | exceeds_expectations, meets_expectations, below_expectations |
+| technical_excellence | INTEGER     | NULL                           | Manager rating 1-5 for technical excellence   |
+| technical_justification | TEXT     | NULL                           | Justification for technical rating             |
+| collaboration       | INTEGER      | NULL                           | Manager rating 1-5 for collaboration          |
+| collaboration_justification | TEXT | NULL                           | Justification for collaboration rating         |
+| problem_solving     | INTEGER      | NULL                           | Manager rating 1-5 for problem solving        |
+| problem_solving_justification | TEXT | NULL                         | Justification for problem solving rating       |
+| initiative          | INTEGER      | NULL                           | Manager rating 1-5 for initiative             |
+| initiative_justification | TEXT    | NULL                           | Justification for initiative rating            |
+| development_plan    | TEXT         | NULL                           | Development plan for next period               |
+| manager_support     | TEXT         | NULL                           | Support manager will provide                   |
+| business_impact     | TEXT         | NULL                           | Assessment of business impact                  |
+| sentiment_analyzed  | BOOLEAN      | DEFAULT false                  | Whether AI sentiment analysis was performed    |
+| submitted_at        | TIMESTAMP    | NULL                           | When review was submitted                      |
+| created_at          | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at          | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+### 15. goal_manager_assessments
+| Field Name       | Data Type    | Constraints                    | Description                                    |
+|------------------|--------------|--------------------------------|------------------------------------------------|
+| id               | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for goal manager assessment |
+| manager_review_id | UUID        | FOREIGN KEY (manager_reviews.id) | Parent manager review                       |
+| goal_id          | UUID         | FOREIGN KEY (goals.id)         | Goal being assessed                            |
+| employee_self_rating | ENUM     | NULL                           | Employee's self-rating for reference          |
+| manager_rating   | ENUM         | NULL                           | exceeded, met, partially_met, not_met          |
+| manager_assessment | TEXT       | NULL                           | Manager's assessment of goal achievement       |
+| business_impact  | TEXT         | NULL                           | Business impact of goal achievement            |
+| created_at       | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at       | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+### 16. upward_reviews
+| Field Name              | Data Type    | Constraints                    | Description                                    |
+|-------------------------|--------------|--------------------------------|------------------------------------------------|
+| id                      | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for upward review           |
+| cycle_id                | UUID         | FOREIGN KEY (review_cycles.id) | Review cycle reference                         |
+| reviewer_id             | UUID         | FOREIGN KEY (users.id)         | Employee giving upward feedback                |
+| manager_id              | UUID         | FOREIGN KEY (users.id)         | Manager being reviewed                         |
+| status                  | ENUM         | DEFAULT 'not_started'          | not_started, in_progress, completed           |
+| management_effectiveness | INTEGER     | NULL                           | Rating 1-5 for management effectiveness       |
+| effectiveness_examples  | TEXT         | NULL                           | Examples of management effectiveness           |
+| communication_rating    | INTEGER      | NULL                           | Rating 1-5 for communication                  |
+| communication_examples  | TEXT         | NULL                           | Examples of communication                      |
+| growth_support_rating   | INTEGER      | NULL                           | Rating 1-5 for growth support                 |
+| growth_support_examples | TEXT         | NULL                           | Examples of growth support                     |
+| improvement_suggestions | TEXT         | NULL                           | Suggestions for manager improvement            |
+| submitted_at            | TIMESTAMP    | NULL                           | When review was submitted                      |
+| created_at              | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at              | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+### 17. review_meetings
+| Field Name    | Data Type    | Constraints                    | Description                                    |
+|---------------|--------------|--------------------------------|------------------------------------------------|
+| id            | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for review meeting          |
+| cycle_id      | UUID         | FOREIGN KEY (review_cycles.id) | Review cycle reference                         |
+| manager_id    | UUID         | FOREIGN KEY (users.id)         | Manager conducting meeting                     |
+| employee_id   | UUID         | FOREIGN KEY (users.id)         | Employee in the meeting                        |
+| scheduled_at  | TIMESTAMP    | NULL                           | Scheduled meeting time                         |
+| status        | ENUM         | DEFAULT 'scheduled'            | scheduled, completed, cancelled                |
+| meeting_notes | TEXT         | NULL                           | Notes from the meeting                         |
+| action_items  | TEXT[]       | NULL                           | Array of action items                          |
+| created_at    | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record creation timestamp                      |
+| updated_at    | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Record last update timestamp                   |
+
+---
+
+## **Database Indexes**
+
+### Performance Indexes
+| Index Name                        | Table                  | Columns              | Purpose                                |
+|-----------------------------------|------------------------|----------------------|----------------------------------------|
+| idx_users_manager_id              | users                  | manager_id           | Manager-team relationships             |
+| idx_objectives_owner_id           | objectives             | owner_id             | Manager's objectives lookup            |
+| idx_objectives_status             | objectives             | status               | Filter by objective status             |
+| idx_goals_objective_id            | goals                  | objective_id         | Goals under specific objective         |
+| idx_goals_assigned_to             | goals                  | assigned_to          | User's assigned goals                  |
+| idx_goals_status                  | goals                  | status               | Filter by goal status                  |
+| idx_tasks_goal_id                 | individual_tasks       | goal_id              | Tasks under specific goal              |
+| idx_tasks_assigned_to             | individual_tasks       | assigned_to          | User's assigned tasks                  |
+| idx_feedback_to_user_id           | feedback               | to_user_id           | Feedback received by user              |
+| idx_feedback_from_user_id         | feedback               | from_user_id         | Feedback given by user                 |
+| idx_feedback_created_at           | feedback               | created_at           | Recent feedback queries                |
+| idx_feedback_tags_feedback_id     | feedback_tags          | feedback_id          | Tags for specific feedback             |
+| idx_review_participants_cycle     | review_participants    | cycle_id             | Participants in specific cycle         |
+| idx_review_participants_user      | review_participants    | user_id              | User's review cycles                   |
+| idx_self_assessments_cycle_user   | self_assessments       | cycle_id, user_id    | User's self-assessment in cycle        |
+| idx_goal_assessments_self         | goal_assessments       | self_assessment_id   | Goals in self-assessment               |
+| idx_peer_reviews_cycle            | peer_reviews           | cycle_id             | Peer reviews in cycle                  |
+| idx_peer_reviews_reviewee         | peer_reviews           | reviewee_id          | Reviews received by user               |
+| idx_peer_reviews_reviewer         | peer_reviews           | reviewer_id          | Reviews given by user                  |
+| idx_manager_reviews_cycle         | manager_reviews        | cycle_id             | Manager reviews in cycle               |
+| idx_manager_reviews_employee      | manager_reviews        | employee_id          | Reviews for specific employee          |
+| idx_manager_reviews_manager       | manager_reviews        | manager_id           | Reviews by specific manager            |
+| idx_upward_reviews_manager        | upward_reviews         | manager_id           | Upward reviews for manager             |
+| idx_upward_reviews_cycle          | upward_reviews         | cycle_id             | Upward reviews in cycle                |
+| idx_review_meetings_manager       | review_meetings        | manager_id           | Meetings for manager                   |
+| idx_review_meetings_employee      | review_meetings        | employee_id          | Meetings for employee                  |
+
+---
+
+## **Foreign Key Relationships**
+
+### Key Relationships
+| Child Table           | Child Column           | Parent Table      | Parent Column | Relationship Type | On Delete        |
+|-----------------------|------------------------|-------------------|---------------|-------------------|------------------|
+| users                 | manager_id             | users             | id            | One-to-Many       | SET NULL         |
+| objectives            | owner_id               | users             | id            | One-to-Many       | RESTRICT         |
+| goals                 | objective_id           | objectives        | id            | One-to-Many       | CASCADE          |
+| goals                 | assigned_to            | users             | id            | One-to-Many       | RESTRICT         |
+| individual_tasks      | goal_id                | goals             | id            | One-to-Many       | CASCADE          |
+| individual_tasks      | assigned_to            | users             | id            | One-to-Many       | RESTRICT         |
+| task_updates          | task_id                | individual_tasks  | id            | One-to-Many       | CASCADE          |
+| task_updates          | updated_by             | users             | id            | One-to-Many       | RESTRICT         |
+| feedback              | from_user_id           | users             | id            | One-to-Many       | RESTRICT         |
+| feedback              | to_user_id             | users             | id            | One-to-Many       | RESTRICT         |
+| feedback              | related_objective_id   | objectives        | id            | One-to-Many       | SET NULL         |
+| feedback              | related_goal_id        | goals             | id            | One-to-Many       | SET NULL         |
+| feedback              | related_task_id        | individual_tasks  | id            | One-to-Many       | SET NULL         |
+| feedback_tags         | feedback_id            | feedback          | id            | One-to-Many       | CASCADE          |
+| feedback_comments     | feedback_id            | feedback          | id            | One-to-Many       | CASCADE          |
+| feedback_comments     | comment_by             | users             | id            | One-to-Many       | RESTRICT         |
+| review_cycles         | created_by             | users             | id            | One-to-Many       | RESTRICT         |
+| review_participants   | cycle_id               | review_cycles     | id            | One-to-Many       | CASCADE          |
+| review_participants   | user_id                | users             | id            | One-to-Many       | CASCADE          |
+| self_assessments      | cycle_id               | review_cycles     | id            | One-to-Many       | CASCADE          |
+| self_assessments      | user_id                | users             | id            | One-to-Many       | CASCADE          |
+| goal_assessments      | self_assessment_id     | self_assessments  | id            | One-to-Many       | CASCADE          |
+| goal_assessments      | goal_id                | goals             | id            | One-to-Many       | RESTRICT         |
+| peer_reviews          | cycle_id               | review_cycles     | id            | One-to-Many       | CASCADE          |
+| peer_reviews          | reviewer_id            | users             | id            | One-to-Many       | CASCADE          |
+| peer_reviews          | reviewee_id            | users             | id            | One-to-Many       | CASCADE          |
+| manager_reviews       | cycle_id               | review_cycles     | id            | One-to-Many       | CASCADE          |
+| manager_reviews       | manager_id             | users             | id            | One-to-Many       | CASCADE          |
+| manager_reviews       | employee_id            | users             | id            | One-to-Many       | CASCADE          |
+| goal_manager_assessments | manager_review_id   | manager_reviews   | id            | One-to-Many       | CASCADE          |
+| goal_manager_assessments | goal_id             | goals             | id            | One-to-Many       | RESTRICT         |
+| upward_reviews        | cycle_id               | review_cycles     | id            | One-to-Many       | CASCADE          |
+| upward_reviews        | reviewer_id            | users             | id            | One-to-Many       | CASCADE          |
+| upward_reviews        | manager_id             | users             | id            | One-to-Many       | CASCADE          |
+| review_meetings       | cycle_id               | review_cycles     | id            | One-to-Many       | CASCADE          |
+| review_meetings       | manager_id             | users             | id            | One-to-Many       | RESTRICT         |
+| review_meetings       | employee_id            | users             | id            | One-to-Many       | RESTRICT         |
+
+---
+
+## **ENUM Definitions**
+
+### User Roles
+```sql
+ENUM('hr_admin', 'manager', 'individual_contributor')
+```
+
+### Status Fields
+```sql
+-- For objectives, review_cycles
+ENUM('draft', 'active', 'completed', 'cancelled')
+
+-- For goals, individual_tasks, reviews
+ENUM('not_started', 'in_progress', 'completed', 'blocked')
+
+-- For meetings
+ENUM('scheduled', 'completed', 'cancelled')
+```
+
+### Review and Rating Fields
+```sql
+-- Review types
+ENUM('quarterly', 'half_yearly', 'annual')
+
+-- Feedback types
+ENUM('commendation', 'guidance', 'constructive')
+
+-- Visibility
+ENUM('private', 'public')
+
+-- Goal ratings
+ENUM('exceeded', 'met', 'partially_met', 'not_met')
+
+-- Overall performance ratings
+ENUM('exceeds_expectations', 'meets_expectations', 'below_expectations')
+```
+
+---
+
+## **Key Design Decisions**
+
+1. **UUIDs as Primary Keys** - Better for distributed systems and prevents ID guessing
+2. **Soft Deletes Not Implemented** - Using foreign key constraints with appropriate CASCADE/RESTRICT rules
+3. **Audit Trail via task_updates** - Maintains history of all task progress changes
+4. **Flexible Feedback Relations** - Feedback can optionally relate to objectives, goals, or tasks
+5. **Anonymous Reviews Supported** - Boolean flag for peer and upward reviews
+6. **Progress Calculation** - Task progress rolls up to goals, goals to objectives
+7. **Array Fields** - Using TEXT[] for evidence links and action items (PostgreSQL compatible)
+8. **Timestamp Tracking** - All tables include created_at and updated_at for audit purposes
+9. **Manager Hierarchy** - Self-referencing users table with nullable manager_id
+10. **Review Cycle Flexibility** - Configurable timelines for different review phases
+
+---
+
+## **AI-Powered Features Tables**
+
+### 18. ai_sentiment_analysis
+| Field Name         | Data Type    | Constraints                    | Description                                    |
+|--------------------|--------------|--------------------------------|------------------------------------------------|
+| id                 | UUID         | PRIMARY KEY, AUTO GENERATE     | Unique identifier for sentiment analysis       |
+| content_type       | ENUM         | NOT NULL                       | feedback, self_assessment, peer_review, manager_review |
+| content_id         | UUID         | NOT NULL                       | References the specific content being analyzed |
+| sentiment_score    | DECIMAL(4,3) | NULL                           | Sentiment score (-1.000 to 1.000)             |
+| sentiment_label    | ENUM         | NULL                           | positive, neutral, negative                    |
+| confidence_score   | DECIMAL(3,2) | NULL                           | AI confidence level (0.00 to 1.00)            |
+| detected_issues    | TEXT[]       | NULL                           | Array of detected issues (vague_response, etc) |
+| analysis_metadata  | JSONB        | NULL                           | Additional NLP insights                        |
+| created_at         | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP      | Analysis timestamp                             |
+
+---
+
+## **Additional AI Indexes**
+
+### AI Performance Indexes
+| Index Name                              | Table                    | Columns                | Purpose                                |
+|-----------------------------------------|--------------------------|------------------------|----------------------------------------|
+| idx_ai_sentiment_content               | ai_sentiment_analysis    | content_type, content_id | Sentiment for specific content       |
+| idx_ai_sentiment_score                 | ai_sentiment_analysis    | sentiment_label        | Filter by sentiment type               |
+| idx_feedback_sentiment_flag            | feedback                 | sentiment_analyzed     | Find unanalyzed feedback               |
+| idx_reviews_sentiment_flag             | peer_reviews             | sentiment_analyzed     | Find unanalyzed peer reviews           |
+| idx_manager_reviews_sentiment_flag     | manager_reviews          | sentiment_analyzed     | Find unanalyzed manager reviews        |
+| idx_self_assessments_sentiment_flag    | self_assessments         | sentiment_analyzed     | Find unanalyzed self-assessments       |
+
+---
+
+## **Updated ENUM Definitions**
+
+### AI-Related ENUMs
+```sql
+-- Content types for sentiment analysis
+ENUM('feedback', 'self_assessment', 'peer_review', 'manager_review')
+
+-- Sentiment labels
+ENUM('positive', 'neutral', 'negative')
+```
+
+---
+
+## **Updated Foreign Key Relationships**
+
+### AI-Related Relationships
+| Child Table           | Child Column         | Parent Table        | Parent Column | Relationship Type | On Delete        |
+|-----------------------|----------------------|---------------------|---------------|-------------------|------------------|
+
+**Note:** ai_sentiment_analysis uses polymorphic relationships (content_id can reference multiple tables based on content_type field).
+
+---
+
+## **Critical Business Rules & Constraints**
+
+### Timeline Validation Constraints
+```sql
+-- Goals must end before or on their parent objective's end date
+ALTER TABLE goals ADD CONSTRAINT check_goal_timeline 
+CHECK (due_date IS NULL OR due_date <= (SELECT end_date FROM objectives WHERE id = objective_id));
+
+-- Tasks must end before or on their parent goal's due date
+ALTER TABLE individual_tasks ADD CONSTRAINT check_task_timeline
+CHECK (due_date IS NULL OR due_date <= (SELECT due_date FROM goals WHERE id = goal_id));
+
+-- Objective end date must be after start date
+ALTER TABLE objectives ADD CONSTRAINT check_objective_dates
+CHECK (end_date > start_date);
+```
+
+### Business Logic Constraints
+```sql
+-- Users cannot be their own manager
+ALTER TABLE users ADD CONSTRAINT check_self_manager
+CHECK (id != manager_id);
+
+-- Goal titles must be unique within the same objective
+ALTER TABLE goals ADD CONSTRAINT unique_goal_titles_per_objective
+UNIQUE(objective_id, title);
+
+-- Task titles must be unique within the same goal
+ALTER TABLE individual_tasks ADD CONSTRAINT unique_task_titles_per_goal
+UNIQUE(goal_id, title);
+
+-- Progress percentages must be between 0 and 100
+ALTER TABLE objectives ADD CONSTRAINT check_objective_progress
+CHECK (progress_percentage >= 0.00 AND progress_percentage <= 100.00);
+
+ALTER TABLE goals ADD CONSTRAINT check_goal_progress
+CHECK (progress_percentage >= 0.00 AND progress_percentage <= 100.00);
+
+ALTER TABLE individual_tasks ADD CONSTRAINT check_task_progress
+CHECK (progress_percentage >= 0.00 AND progress_percentage <= 100.00);
+
+-- Feedback users cannot give feedback to themselves
+ALTER TABLE feedback ADD CONSTRAINT check_self_feedback
+CHECK (from_user_id != to_user_id);
+
+-- Review participants cannot review themselves
+ALTER TABLE peer_reviews ADD CONSTRAINT check_self_peer_review
+CHECK (reviewer_id != reviewee_id);
+
+ALTER TABLE manager_reviews ADD CONSTRAINT check_self_manager_review
+CHECK (manager_id != employee_id);
+
+-- Review cycle dates must be logical
+ALTER TABLE review_cycles ADD CONSTRAINT check_review_cycle_dates
+CHECK (review_period_start < review_period_end AND
+       self_assessment_start >= review_period_end AND
+       self_assessment_end > self_assessment_start AND
+       peer_review_start >= self_assessment_start AND
+       peer_review_end > peer_review_start AND
+       manager_review_start >= peer_review_start AND
+       manager_review_end > manager_review_start);
+
+-- Department managers must be users
+ALTER TABLE departments ADD CONSTRAINT check_department_manager_exists
+FOREIGN KEY (manager_id) REFERENCES users(id);
+
+-- Department managers should have manager or hr_admin role
+ALTER TABLE departments ADD CONSTRAINT check_department_manager_role
+CHECK (manager_id IN (SELECT id FROM users WHERE role IN ('manager', 'hr_admin')));
+```
+
+### Additional Missing Indexes
+```sql
+-- Department-related indexes
+CREATE INDEX idx_users_department_id ON users(department_id);
+CREATE INDEX idx_departments_manager_id ON departments(manager_id);
+CREATE INDEX idx_departments_is_active ON departments(is_active);
+
+-- Notification system indexes
+CREATE INDEX idx_notifications_recipient_id ON notifications(recipient_id);
+CREATE INDEX idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX idx_notifications_type ON notifications(type);
+CREATE INDEX idx_notifications_created_at ON notifications(created_at);
+CREATE INDEX idx_notifications_priority ON notifications(priority);
+
+-- System settings indexes
+CREATE INDEX idx_system_settings_key ON system_settings(setting_key);
+CREATE INDEX idx_system_settings_type ON system_settings(data_type);
+
+-- Peer review assignment indexes
+CREATE INDEX idx_peer_assignments_reviewee ON peer_review_assignments(reviewee_id);
+CREATE INDEX idx_peer_assignments_reviewer ON peer_review_assignments(reviewer_id);
+CREATE INDEX idx_peer_assignments_cycle ON peer_review_assignments(review_cycle);
+CREATE INDEX idx_peer_assignments_status ON peer_review_assignments(status);
+CREATE INDEX idx_peer_assignments_due_date ON peer_review_assignments(due_date);
+
+-- Feedback tag template indexes
+CREATE INDEX idx_feedback_tags_active ON feedback_tag_templates(is_active);
+CREATE INDEX idx_feedback_tags_category ON feedback_tag_templates(category);
+
+-- Priority filtering indexes
+CREATE INDEX idx_objectives_priority ON objectives(priority);
+CREATE INDEX idx_goals_priority ON goals(priority);
+CREATE INDEX idx_tasks_priority ON individual_tasks(priority);
+
+-- User activity indexes
+CREATE INDEX idx_users_is_active ON users(is_active);
+CREATE INDEX idx_users_role_department ON users(role, department_id);
+```
+
+### Updated ENUM Definitions (Complete)
+```sql
+-- User roles
+CREATE TYPE user_role AS ENUM('hr_admin', 'manager', 'individual_contributor');
+
+-- Priority levels
+CREATE TYPE priority_level AS ENUM('low', 'medium', 'high');
+
+-- Status fields
+CREATE TYPE objective_status AS ENUM('draft', 'active', 'completed', 'cancelled');
+CREATE TYPE task_status AS ENUM('not_started', 'in_progress', 'completed', 'blocked');
+CREATE TYPE review_status AS ENUM('not_started', 'in_progress', 'completed');
+CREATE TYPE meeting_status AS ENUM('scheduled', 'completed', 'cancelled');
+CREATE TYPE assignment_status AS ENUM('pending', 'in_progress', 'completed', 'declined');
+
+-- Timeline types
+CREATE TYPE timeline_type AS ENUM('quarterly', 'annual');
+
+-- Feedback types
+CREATE TYPE feedback_type AS ENUM('commendation', 'guidance', 'constructive');
+CREATE TYPE visibility_type AS ENUM('private', 'public');
+
+-- Rating types
+CREATE TYPE goal_rating AS ENUM('exceeded', 'met', 'partially_met', 'not_met');
+CREATE TYPE performance_rating AS ENUM('exceeds_expectations', 'meets_expectations', 'below_expectations');
+
+-- Review types
+CREATE TYPE review_type AS ENUM('quarterly', 'half_yearly', 'annual');
+
+-- AI-related ENUMs
+CREATE TYPE content_type AS ENUM('feedback', 'self_assessment', 'peer_review', 'manager_review');
+CREATE TYPE sentiment_label AS ENUM('positive', 'neutral', 'negative');
+
+-- Notification types
+CREATE TYPE notification_type AS ENUM('goal_assigned', 'task_updated', 'feedback_received', 'review_deadline', 'review_submitted', 'manager_assigned', 'department_changed');
+CREATE TYPE notification_priority AS ENUM('low', 'normal', 'high', 'urgent');
+
+-- System setting data types
+CREATE TYPE setting_data_type AS ENUM('boolean', 'string', 'integer', 'json');
+
+-- Tag categories
+CREATE TYPE tag_category AS ENUM('skill', 'behavior', 'value', 'competency');
+
+-- Related entity types
+CREATE TYPE entity_type AS ENUM('objective', 'goal', 'task', 'feedback', 'review');
+```
+
+### Permission & Role-Based Access Control Rules
+```sql
+-- Managers can only manage users from their own department
+-- This constraint is enforced at application level with permission decorators
+
+-- Individual contributors have exactly one manager
+-- (Already enforced by foreign key constraint with NOT NULL on manager_id for role='individual_contributor')
+
+-- HR Admins can access all departments
+-- Managers can only access their own department
+-- Individual contributors can only access their own data
+-- (These are enforced at application level through role-based middleware)
+
+-- Overdue items cannot be updated (enforced at application level)
+-- Goals cannot exist without parent objective (enforced by foreign key NOT NULL constraint)
+-- Tasks must be linked to assigned goals (enforced by foreign key NOT NULL constraint)
+```
+
+### Cascade Deletion Protection
+```sql
+-- Prevent deletion of users who have active objectives, goals, or tasks
+-- This is handled through foreign key constraints with RESTRICT
+
+-- Prevent deletion of objectives that have active goals
+-- Prevent deletion of goals that have active tasks
+-- These are handled through CASCADE relationships for data consistency
+
+-- Prevent deletion of departments that have active users
+ALTER TABLE users ADD CONSTRAINT fk_users_department
+FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE RESTRICT;
+```
+
+---
+
+## **Edge Case Handling**
+
+### Critical Edge Cases
+1. **No Manager Assigned**: Users without manager_id are handled as top-level managers
+2. **No Department Assigned**: Users without department_id are handled through application validation
+3. **Orphaned Goals**: Prevented by foreign key constraints (goals require objectives)
+4. **Circular Manager Relationships**: Prevented by check constraint (users cannot be their own manager)
+5. **Invalid Date Ranges**: Prevented by timeline validation constraints
+6. **Progress > 100%**: Prevented by check constraints on progress fields
+7. **Self-Review**: Prevented by check constraints on all review tables
+8. **Inactive Users in Reviews**: Handled at application level to prevent assignment to inactive users
+
+### Data Integrity Rules
+1. **Unique Constraints**: Goal titles unique per objective, task titles unique per goal
+2. **Timeline Validation**: Tasks end before goals, goals end before objectives
+3. **Role Validation**: Department managers must have appropriate roles
+4. **Progress Validation**: All progress percentages between 0-100
+5. **Relationship Validation**: Users cannot manage themselves or review themselves
+
+---
+
+## **Performance Optimization Strategy**
+
+### Query Optimization
+1. **Composite Indexes**: Role + Department for user filtering
+2. **Partial Indexes**: Only active records for frequently queried tables
+3. **Notification Indexes**: Optimized for unread notifications by user
+4. **Timeline Indexes**: Due date filtering for tasks and goals
+5. **Department Filtering**: Optimized for manager-scoped queries
+
+### Database-Level Optimizations
+1. **Foreign Key Indexes**: All foreign keys have corresponding indexes
+2. **Status Filtering**: Separate indexes for status fields
+3. **Date Range Queries**: Optimized for timeline filtering
+4. **Text Search**: Consider full-text search indexes for feedback content
+5. **Notification Performance**: Indexes for real-time notification queries

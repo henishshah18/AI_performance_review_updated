@@ -1,0 +1,550 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 🌐 **Shared UI Patterns - AI Performance Review Platform**
+
+## **Quick Navigation**
+- 📋 **Used By:** [Manager Journey](mdc:manager_user_journey.mdc) | [Individual Journey](mdc:individual_user_journey.mdc) | [HR Admin Journey](mdc:hr_admin_user_journey.mdc)
+- 🎯 **Contents:** Common components, business rules, routing, validation, error handling
+- 🔗 **Integration:** Referenced across all user journeys for consistent implementation
+
+---
+
+## **🔐 Authentication Patterns**
+
+### **Login Screen (Shared)**
+```
+Application Logo: "ReviewAI" (consistent branding)
+Login Form:
+├── Email Input Field (required, email validation)
+├── Password Input Field (required, min 8 characters)
+├── [Login Button] → POST /api/auth/login
+├── Error Message Area (dynamic error display)
+└── [Forgot Password] → /reset-password
+
+Role-Based Redirect Logic:
+- HR Admin → /admin/dashboard
+- Manager → /dashboard  
+- Individual → /dashboard
+
+Error States:
+├── Invalid credentials → "Invalid email or password"
+├── Account locked → "Account temporarily locked. Contact admin"
+├── Network error → "Connection failed. Please try again"
+└── Server error → "Service temporarily unavailable"
+```
+
+---
+
+## **🧩 Global Components**
+
+### **Header Component (All Roles)**
+```
+Layout: ReviewAI Logo | Navigation | Actions | Profile
+├── Logo (top-left): "ReviewAI" → Navigate to role-specific dashboard
+├── Give Feedback Button (top-center): → Opens Global Feedback Modal
+├── Notification Bell with count badge → Opens notification dropdown
+└── User Profile Dropdown (top-right):
+    ├── View Profile → /profile
+    ├── Settings → /settings (role-specific)
+    ├── Help & Support → /help
+    └── Logout → POST /api/auth/logout
+
+Responsive Behavior:
+- Desktop: Full header with all elements
+- Tablet: Collapsible navigation menu
+- Mobile: Hamburger menu with drawer navigation
+```
+
+### **Global Feedback Modal**
+```
+Modal Title: "Give Feedback"
+Accessibility: Keyboard navigation, screen reader support
+
+Form Fields:
+├── To Person* (searchable dropdown with role-based filtering)
+│   ├── Managers: Can give to anyone
+│   ├── Individuals: Can give to anyone
+│   └── HR Admin: Can give to anyone
+├── Feedback Type* (radio buttons)
+│   ├── Commendation (positive feedback)
+│   ├── Guidance (developmental)
+│   └── Constructive (improvement areas)
+├── Visibility (radio buttons)
+│   ├── Private (recipient and their manager only)
+│   └── Public (visible in team feedback)
+├── Related To (optional dropdown)
+│   ├── Related goal/objective context
+│   └── Project or initiative reference
+├── Content* (textarea with character count, max 500 chars)
+├── Tags (checkbox list from predefined tags)
+│   ├── Communication, Collaboration, Leadership
+│   ├── Technical Skills, Problem Solving
+│   └── Innovation, Mentoring, Quality
+└── Anonymous Option (checkbox, for peer feedback)
+
+Validation:
+- All required fields filled
+- Content not empty and under character limit
+- Valid recipient selected
+- Cannot give feedback to self
+
+Actions:
+├── [Cancel] → Close modal without saving
+├── [Save Draft] → Save for later completion
+└── [Send Feedback] → POST /api/feedback
+
+Success: Close modal, show success toast, refresh relevant sections
+Error: Show validation messages inline, preserve form data
+```
+
+### **Notification System**
+```
+Notification Bell Component:
+├── Unread count badge (red circle with number)
+├── Click → Dropdown with recent notifications (max 10)
+├── [View All] → /notifications
+└── [Mark All Read] → PUT /api/notifications/mark-all-read
+
+Notification Types:
+├── Goal Assignment: "New goal assigned: [Goal Title]"
+├── Feedback Received: "[Sender] gave you feedback"
+├── Review Deadline: "Self-assessment due in 3 days"
+├── Progress Update: "[Person] updated task progress"
+├── System Announcement: "New review cycle started"
+├── Objective Assignment: "New objective assigned by HR"
+└── Meeting Reminder: "Performance review meeting tomorrow"
+
+Notification Actions:
+├── Click notification → Navigate to relevant page
+├── Dismiss individual notifications
+└── Auto-dismiss after 30 days
+
+Real-time Updates:
+- WebSocket connection for instant notifications
+- Browser push notifications (with permission)
+- Email notifications (configurable)
+```
+
+---
+
+## **🎨 Status Badges & Visual Indicators**
+
+### **Status Badge Component**
+```
+Color-Coded Status System:
+├── Not Started: Gray background (#6B7280), white text
+├── Draft: Light gray (#9CA3AF), dark text
+├── In Progress: Blue background (#3B82F6), white text
+├── Active: Darker blue (#2563EB), white text
+├── Completed: Green background (#10B981), white text
+├── Blocked: Red background (#EF4444), white text
+├── Overdue: Dark red (#DC2626), white text
+└── Cancelled: Gray with strikethrough (#6B7280)
+
+Badge Properties:
+├── Rounded corners (border-radius: 4px)
+├── Padding: 4px 8px
+├── Font: 12px, medium weight
+├── Icons: Optional status icons (check, warning, clock)
+└── Hover state: Tooltip with status description
+
+Implementation:
+- Consistent across all components
+- Accessible with proper contrast ratios
+- Screen reader friendly with aria-labels
+```
+
+### **Progress Indicators**
+```
+Progress Bar Component:
+├── Background: Light gray (#E5E7EB)
+├── Fill: Role-based colors (Primary: #5E35B1)
+├── Height: 8px (compact), 12px (standard)
+├── Border radius: 4px
+├── Animation: Smooth transitions on updates
+└── Label: Percentage text overlay (optional)
+
+Circular Progress Component:
+├── Diameter: 40px (small), 60px (medium), 80px (large)
+├── Stroke width: 4px
+├── Colors: Same as progress bars
+├── Center text: Percentage or fraction
+└── Animation: Clockwise fill animation
+
+Usage Guidelines:
+- Goals: Show task completion progress
+- Objectives: Show goal completion progress  
+- Review cycles: Show phase completion
+- Individual progress: Show overall performance
+```
+
+---
+
+## **🔄 Loading States & Feedback**
+
+### **Loading Patterns**
+```
+Skeleton Screens (Initial Load):
+├── Card skeletons for dashboard components
+├── Table row skeletons for data lists
+├── Form field skeletons for modals
+└── Animation: Subtle shimmer effect
+
+Loading Spinners:
+├── Button states: Disable + spinner during submission
+├── Page transitions: Full-page spinner overlay
+├── Section updates: Inline spinners
+└── Colors: Match primary theme (#5E35B1)
+
+Progressive Loading:
+├── Critical content first (navigation, headers)
+├── Secondary content (charts, analytics)
+├── Non-critical content (recommendations, tips)
+└── Error boundaries for partial failures
+```
+
+### **Success & Error Toast Messages**
+```
+Toast Component Specifications:
+├── Position: Top-right corner, 16px margin
+├── Width: 320px max, responsive on mobile
+├── Auto-dismiss: 5 seconds (success), 8 seconds (error)
+├── Manual dismiss: X button in top-right
+└── Stacking: Multiple toasts stack vertically
+
+Success Toast:
+├── Background: Green (#10B981)
+├── Icon: Checkmark
+├── Text: White, 14px
+└── Examples:
+    - "Goal created successfully"
+    - "Feedback sent to [Name]"
+    - "Progress updated"
+
+Error Toast:
+├── Background: Red (#EF4444)
+├── Icon: Warning triangle
+├── Text: White, 14px
+└── Examples:
+    - "Failed to save changes"
+    - "Network connection lost"
+    - "Invalid form data"
+
+Info Toast:
+├── Background: Blue (#3B82F6)
+├── Icon: Info circle
+├── Text: White, 14px
+└── Examples:
+    - "Auto-saved draft"
+    - "Review reminder sent"
+    - "New notification received"
+```
+
+---
+
+## **📝 Form Patterns & Validation**
+
+### **Form Validation Rules**
+```
+Field-Level Validation:
+├── Real-time validation on blur/change
+├── Error states with red borders and text
+├── Success states with green checkmarks
+└── Async validation for uniqueness checks
+
+Common Validation Patterns:
+├── Required fields: "This field is required"
+├── Email format: "Please enter a valid email"
+├── Date range: "End date must be after start date"
+├── Character limits: "Maximum 100 characters allowed"
+├── Uniqueness: "[Item] already exists"
+└── Permission: "You don't have permission for this action"
+
+Form Submission States:
+├── Valid: Enable submit button, normal colors
+├── Invalid: Disable submit button, show errors
+├── Submitting: Show loading spinner, disable form
+├── Success: Show success message, clear form
+└── Error: Show error message, preserve form data
+```
+
+### **Modal Dialog Patterns**
+```
+Standard Modal Structure:
+├── Backdrop: Semi-transparent overlay (#000000, 50% opacity)
+├── Container: White background, rounded corners
+├── Header: Title + close button (X)
+├── Body: Form content with padding
+├── Footer: Action buttons (right-aligned)
+└── Focus management: Trap focus within modal
+
+Modal Sizes:
+├── Small: 400px width (confirmations)
+├── Medium: 600px width (forms)
+├── Large: 800px width (detailed views)
+└── Full-screen: Mobile responsive
+
+Close Behaviors:
+├── X button click
+├── Escape key press
+├── Backdrop click (configurable)
+└── Action completion (save/cancel)
+
+Accessibility:
+├── Focus management (trap and restore)
+├── Screen reader announcements
+├── Keyboard navigation support
+└── ARIA labels and roles
+```
+
+---
+
+## **📋 Business Rules Matrix**
+
+### **Role-Based Permissions**
+```
+Data Access Control:
+┌─────────────────┬──────────┬─────────┬────────────┐
+│     Action      │ HR Admin │ Manager │ Individual │
+├─────────────────┼──────────┼─────────┼────────────┤
+│ Create Objective│    ✅     │    ❌    │     ❌      │
+│ Edit Objective  │    ✅     │    ❌    │     ❌      │
+│ View Objectives │    ✅     │ Own Only│  Assigned  │
+│ Create Goal     │    ❌     │    ✅    │     ❌      │
+│ Edit Goal       │    ❌     │    ✅*   │     ❌      │
+│ View Goals      │    ✅     │ Team Only│  Own Only  │
+│ Create Task     │    ❌     │    ❌    │     ✅      │
+│ Edit Task       │    ❌     │    ❌    │   Own Only │
+│ Give Feedback   │    ✅     │    ✅    │     ✅      │
+│ View Feedback   │ Public   │ Team Only│  Own Only  │
+│ Start Review    │    ✅     │    ❌    │     ❌      │
+│ View Analytics  │    ✅     │ Team Only│  Own Only  │
+└─────────────────┴──────────┴─────────┴────────────┘
+
+* Manager can edit goals only if status = "Not Started"
+```
+
+### **State Transition Rules**
+```
+Objective Lifecycle:
+Draft → Active → [Completed | Cancelled]
+├── Draft: HR Admin can edit/delete
+├── Active: Read-only, goals can be created
+├── Completed: Auto-complete when all goals done
+└── Cancelled: Manual action by HR Admin
+
+Goal Lifecycle:
+Not Started → In Progress → [Completed | Blocked]
+├── Not Started: Manager can edit/delete
+├── In Progress: Read-only, tasks can be added
+├── Completed: Auto-complete when all tasks done
+└── Blocked: Manual status, requires intervention
+
+Task Lifecycle:
+Not Started → In Progress → [Completed | Blocked]
+├── Not Started: Individual can edit/delete
+├── In Progress: Progress updates allowed
+├── Completed: Auto-complete at 100% progress
+└── Blocked: Requires manager notification
+
+Business Constraints:
+├── Cannot delete items with active children
+├── Cannot edit items after they start
+├── Cannot create children for overdue parents
+├── Progress auto-calculates from children
+└── Dates must respect parent/child hierarchy
+```
+
+---
+
+## **🔗 Complete URL Routing Structure**
+
+### **Authentication & Public Routes**
+```
+┌─────────────────┬─────────────────┬──────┬─────────────────────────┐
+│      URL        │   Component     │ Auth │        Access           │
+├─────────────────┼─────────────────┼──────┼─────────────────────────┤
+│ /               │ Landing         │  ❌   │ Public (redirect login) │
+│ /login          │ LoginForm       │  ❌   │ Public                  │
+│ /signup         │ SignupForm      │  ❌   │ Public                  │
+│ /reset-password │ PasswordReset   │  ❌   │ Public                  │
+│ /verify-email   │ EmailVerify     │  ❌   │ Public                  │
+└─────────────────┴─────────────────┴──────┴─────────────────────────┘
+```
+
+### **Manager Routes**
+```
+┌──────────────────┬──────────────────┬──────┬─────────────────────┐
+│       URL        │    Component     │ Auth │     Data Access     │
+├──────────────────┼──────────────────┼──────┼─────────────────────┤
+│ /dashboard       │ ManagerDashboard │  ✅   │ Own + team data     │
+│ /objectives      │ MyObjectives     │  ✅   │ Assigned objectives │
+│ /objectives/{id} │ ObjectiveDetail  │  ✅   │ If assigned         │
+│ /team-goals      │ TeamGoals        │  ✅   │ Direct reports      │
+│ /goals/{id}      │ GoalDetail       │  ✅   │ If team member      │
+│ /feedback        │ FeedbackMgmt     │  ✅   │ Team feedback       │
+│ /reviews         │ ReviewsMgmt      │  ✅   │ Team reviews        │
+│ /reports         │ ManagerReports   │  ✅   │ Team analytics      │
+│ /profile         │ ProfileSettings  │  ✅   │ Own profile         │
+└──────────────────┴──────────────────┴──────┴─────────────────────┘
+```
+
+### **Individual Contributor Routes**
+```
+┌────────────────────────┬─────────────────────┬──────┬───────────────┐
+│          URL           │      Component      │ Auth │  Data Access  │
+├────────────────────────┼─────────────────────┼──────┼───────────────┤
+│ /dashboard             │ IndividualDashboard │  ✅   │ Own data      │
+│ /goals                 │ MyGoals             │  ✅   │ Assigned      │
+│ /goals/{id}            │ GoalDetail          │  ✅   │ If assigned   │
+│ /tasks                 │ MyTasks             │  ✅   │ Own tasks     │
+│ /tasks/{id}            │ TaskDetail          │  ✅   │ If owner      │
+│ /feedback              │ IndividualFeedback  │  ✅   │ Own feedback  │
+│ /reviews               │ IndividualReviews   │  ✅   │ Own reviews   │
+│ /reviews/self-assessment│ SelfAssessment     │  ✅   │ Own only      │
+│ /reviews/peer/{id}     │ PeerReview          │  ✅   │ If assigned   │
+│ /progress              │ MyProgress          │  ✅   │ Own analytics │
+│ /profile               │ ProfileSettings     │  ✅   │ Own profile   │
+└────────────────────────┴─────────────────────┴──────┴───────────────┘
+```
+
+### **HR Admin Routes**
+```
+┌──────────────────────────┬─────────────────────┬──────┬─────────────────┐
+│           URL            │      Component      │ Auth │   Data Access   │
+├──────────────────────────┼─────────────────────┼──────┼─────────────────┤
+│ /admin/dashboard         │ HRDashboard         │  ✅   │ Company-wide    │
+│ /admin/objectives        │ ObjectivesMgmt      │  ✅   │ All objectives  │
+│ /admin/objectives/{id}   │ ObjectiveDetail     │  ✅   │ Full access     │
+│ /admin/review-cycles     │ ReviewCycles        │  ✅   │ All cycles      │
+│ /admin/review-cycles/{id}│ ReviewCycleDetail   │  ✅   │ Full access     │
+│ /admin/analytics         │ CompanyAnalytics    │  ✅   │ All metrics     │
+│ /admin/reports           │ CompanyReports      │  ✅   │ All data        │
+│ /admin/settings          │ SystemSettings      │  ✅   │ Configuration   │
+│ /admin/users             │ UserManagement      │  ✅   │ All users       │
+│ /admin/departments       │ DepartmentMgmt      │  ✅   │ Org structure   │
+└──────────────────────────┴─────────────────────┴──────┴─────────────────┘
+```
+
+---
+
+## **⚠️ Error Handling & Recovery Patterns**
+
+### **Network Error Patterns**
+```
+Connection Issues:
+├── Connection lost → "Connection lost. Changes will be saved automatically when reconnected."
+├── API timeout → "Request timed out. Click 'Retry' to try again."
+├── Server error (5xx) → "Something went wrong on our end. Please try again or contact support."
+└── Maintenance mode → "System is under maintenance. Please check back in a few minutes."
+
+Recovery Actions:
+├── [Retry] buttons for failed operations
+├── Auto-retry with exponential backoff
+├── Offline mode with local storage
+├── Queue operations for when connection restored
+└── Manual refresh options
+
+Data Integrity:
+├── Optimistic UI updates with rollback
+├── Conflict resolution for concurrent edits
+├── Version control for critical operations
+└── Audit trail for troubleshooting
+```
+
+### **Permission & Validation Errors**
+```
+Access Control:
+├── Unauthorized (401) → Redirect to login
+├── Forbidden (403) → "You don't have permission to perform this action"
+├── Not Found (404) → "The requested item was not found or has been deleted"
+└── Method Not Allowed → "This action is not allowed for your role"
+
+Validation Errors:
+├── Required field → "This field is required"
+├── Format error → "Please enter a valid [field type]"
+├── Range error → "Value must be between [min] and [max]"
+├── Duplicate error → "[Item] already exists"
+├── Dependency error → "Cannot delete [item] with active [children]"
+└── Business rule → Custom message based on rule violation
+
+Error Display:
+├── Inline validation (field-level)
+├── Form-level error summaries
+├── Toast notifications for actions
+├── Modal dialogs for critical errors
+└── Page-level error boundaries
+```
+
+### **Empty States & Guidance**
+```
+Empty State Messages:
+├── No objectives: "No objectives created yet. Contact HR Admin to get started."
+├── No goals: "No goals assigned. Your manager will create goals for you."
+├── No tasks: "Break down your goals into actionable tasks to track progress."
+├── No feedback: "Feedback helps everyone grow. Give feedback to colleagues."
+├── No reviews: "No review history available yet."
+├── No team: "Add team members to start managing their goals."
+├── No data: "No data available for the selected filters."
+└── No search results: "No results found. Try adjusting your search criteria."
+
+Guidance Elements:
+├── Helpful illustrations or icons
+├── Primary action buttons
+├── Link to help documentation
+├── Contact information for support
+└── Contextual tips and suggestions
+```
+
+---
+
+## **📱 Responsive Design Patterns**
+
+### **Breakpoint System**
+```
+Device Categories:
+├── Desktop: 1024px and above
+│   ├── Full sidebar navigation
+│   ├── Multi-column layouts
+│   ├── Expanded data tables
+│   └── Large modal dialogs
+├── Tablet: 768px - 1023px
+│   ├── Collapsible sidebar
+│   ├── Two-column layouts
+│   ├── Horizontal scroll tables
+│   └── Medium modals
+└── Mobile: Below 768px
+    ├── Bottom navigation tabs
+    ├── Single-column layouts
+    ├── Card-based data display
+    ├── Full-screen modals
+    └── Touch-optimized interactions
+```
+
+### **Mobile-First Adaptations**
+```
+Navigation:
+├── Hamburger menu with slide-out drawer
+├── Bottom tab bar for primary navigation
+├── Swipe gestures for common actions
+└── Touch-friendly button sizes (44px minimum)
+
+Data Display:
+├── Card-based layouts over tables
+├── Progressive disclosure (show/hide details)
+├── Infinite scroll for long lists
+└── Pull-to-refresh functionality
+
+Forms:
+├── Full-width inputs with adequate spacing
+├── Native date/time pickers
+├── Auto-zoom prevention on inputs
+└── Submit buttons at bottom of viewport
+```
+
+---
+
+**Integration Notes:** These patterns are referenced throughout [Manager Journey](mdc:manager_user_journey.mdc), [Individual Journey](mdc:individual_user_journey.mdc), and [HR Admin Journey](mdc:hr_admin_user_journey.mdc) files for consistent implementation.

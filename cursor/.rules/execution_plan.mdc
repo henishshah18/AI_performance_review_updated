@@ -1,0 +1,650 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 🚀 **Optimized Execution Plan - AI Performance Review Platform**
+
+## **Project Overview**
+Performance management platform with 3 user roles and core features:
+- **Roles**: HR Admin, Manager, Individual Contributor
+- **Features**: OKR Management, Continuous Feedback, 360° Performance Reviews
+- **Stack**: Django + PostgreSQL/Supabase, React + Tailwind CSS
+- **Architecture**: Following proven patterns from [Shared UI Patterns](mdc:shared_ui_patterns.mdc)
+
+---
+
+## **Phase 1: Foundation & Business Rules Engine**
+
+### **Backend Setup**
+- [ ] Initialize Django project: `django-admin startproject performance_management`
+- [ ] Create virtual environment and activate
+- [ ] Install packages: `pip install django==4.2.0 djangorestframework==3.14.0 django-cors-headers==4.0.0 djangorestframework-simplejwt==5.2.2 psycopg2-binary==2.9.6 python-decouple==3.8 openai==0.27.7`
+- [ ] Configure settings.py with Supabase PostgreSQL connection
+- [ ] Add CORS configuration for `http://localhost:3000`
+- [ ] Configure JWT with 15min access, 7 day refresh tokens
+
+### **Business Rules Implementation (Critical Foundation)**
+- [ ] Create `core` app: `python manage.py startapp core`
+- [ ] Create role-based permission decorators:
+  - [ ] `@hr_admin_required` - HR Admin only actions
+  - [ ] `@manager_required` - Manager only actions  
+  - [ ] `@team_member_access` - Manager can only access direct reports
+  - [ ] `@own_data_only` - Individual can only access own data
+- [ ] Create department-based data filtering utilities
+- [ ] Implement constraint validators:
+  - [ ] `validate_department_assignment` - Managers can only manage same department
+  - [ ] `validate_timeline_hierarchy` - Child dates ≤ parent dates
+  - [ ] `validate_status_transition` - Proper status change rules
+  - [ ] `validate_edit_permissions` - Cannot edit after "In Progress"
+  - [ ] `validate_cascade_deletion` - Cannot delete items with active children
+- [ ] Create progress auto-calculation engine
+- [ ] Add audit trail system for all critical operations
+
+### **User Model & Authentication**
+- [ ] Create `authentication` app: `python manage.py startapp authentication`
+- [ ] Create custom User model with UUID primary key
+- [ ] Add fields: email, first_name, last_name, role (hr_admin/manager/individual_contributor), manager_id, department
+- [ ] Add profile fields: phone, role_title, bio, skills (ArrayField)
+- [ ] Add business rule constraints:
+  - [ ] Individual Contributors must have manager_id
+  - [ ] Managers cannot have manager_id in same department
+  - [ ] HR Admin can have null manager_id
+- [ ] Create custom user manager with role validation
+- [ ] Implement authentication endpoints:
+  - [ ] `POST /api/auth/signup` with role-based validation
+  - [ ] `POST /api/auth/login` with role-based redirects
+  - [ ] `POST /api/auth/logout` with token blacklisting
+  - [ ] `GET /api/auth/me` with role permissions
+- [ ] Add email uniqueness and password validation (min 8 characters)
+
+---
+
+## **Phase 1.5: Shared UI Components (Critical Foundation)**
+
+### **Frontend Setup**
+- [ ] Create React app with TypeScript: `npx create-react-app performance-review --template typescript`
+- [ ] Install dependencies: `npm install react-router-dom axios formik yup tailwindcss @headlessui/react @heroicons/react @tailwindcss/forms`
+- [ ] Configure Tailwind with exact colors from `frontend_structure.mdc`:
+  - [ ] Primary: #5E35B1, Secondary: #00897B, Accent: #FF9800
+  - [ ] Complete color palette with grays and status colors
+  - [ ] Custom spacing scale (4px, 8px, 12px, 16px, 24px, 32px, 48px, 64px)
+
+### **Status Management System (Referenced 20+ times)**
+- [ ] Create `StatusBadge` component with exact colors from `shared_ui_patterns.mdc`:
+  - [ ] Not Started: Gray (#6B7280), Draft: Light gray (#9CA3AF)
+  - [ ] In Progress: Blue (#3B82F6), Active: Darker blue (#2563EB)
+  - [ ] Completed: Green (#10B981), Blocked: Red (#EF4444)
+  - [ ] Overdue: Dark red (#DC2626), Cancelled: Gray with strikethrough
+- [ ] Create status transition validation functions
+- [ ] Add status-based action permissions (edit/delete only for specific statuses)
+- [ ] Implement status tooltip descriptions
+
+### **Global Feedback Modal (Referenced 12+ times)**
+- [ ] Build reusable `GlobalFeedbackModal` component
+- [ ] Implement searchable user dropdown with role-based filtering
+- [ ] Add feedback type selection (Commendation/Guidance/Constructive)
+- [ ] Add visibility controls (Private/Public)
+- [ ] Create tag system with predefined options
+- [ ] Add anonymous feedback option for peer reviews
+- [ ] Implement form validation and error handling
+- [ ] Add success/error toast notifications
+
+### **Common Form Patterns & Validation**
+- [ ] Create reusable form validation components
+- [ ] Implement modal dialog patterns with proper focus management
+- [ ] Add loading states and error handling components
+- [ ] Create empty state components for all scenarios:
+  - [ ] No objectives, goals, tasks, feedback, reviews, team
+  - [ ] Custom illustrations and primary action buttons
+- [ ] Create progress indicators (bars and circular)
+- [ ] Implement toast notification system (success/error/info)
+
+### **Progress Calculation Engine**
+- [ ] Implement auto-progress calculation: tasks → goals → objectives
+- [ ] Add real-time updates when progress changes
+- [ ] Create progress visualization components
+- [ ] Add progress validation (cannot exceed 100%)
+
+---
+
+## **Phase 2: Authentication & Role-Based Access Control**
+
+### **Route Protection & Access Control**
+- [ ] Create route guards based on role permissions
+- [ ] Implement exact URL structure from `shared_ui_patterns.mdc`:
+  - [ ] Public routes: /, /login, /signup, /reset-password
+  - [ ] Manager routes: /dashboard, /objectives, /team-goals, /feedback, /reviews, /reports
+  - [ ] Individual routes: /dashboard, /goals, /tasks, /feedback, /reviews, /progress
+  - [ ] HR Admin routes: /admin/dashboard, /admin/objectives, /admin/review-cycles, /admin/analytics
+- [ ] Add data access validation per route
+- [ ] Create 404 pages for unauthorized access
+- [ ] Implement role-based redirects after login
+
+### **Frontend Authentication Flow**
+- [ ] Create `SignupPage` component with role selection
+- [ ] Create `LoginPage` component with role-based redirects
+- [ ] Implement JWT storage in localStorage with expiration handling
+- [ ] Create protected routes using React Router
+- [ ] Add logout functionality clearing JWT tokens
+- [ ] Implement session management and auto-logout
+
+### **Manager Team Assignment (Critical Edge Case)**
+- [ ] Create `ManagerSelectionModal` for Individual Contributors:
+  - [ ] Show after first login if manager_id is null
+  - [ ] Dropdown filtered by department
+  - [ ] Cannot proceed without selection
+  - [ ] Block access to other features until assigned
+- [ ] Create `TeamSelectionModal` for Managers:
+  - [ ] Show after first login if no team assigned
+  - [ ] Multi-select list of unassigned Individual Contributors
+  - [ ] Can skip but show "Add Team Members" message on dashboard
+- [ ] Implement `PUT /api/users/assign-manager` endpoint
+- [ ] Add "My Team" section in Manager settings
+
+---
+
+## **Phase 3: Navigation & Dashboard Structure**
+
+### **Header & Navigation Components**
+- [ ] Create `Header` component with exact layout from `shared_ui_patterns.mdc`:
+  - [ ] ReviewAI logo, Give Feedback button, notification bell, profile dropdown
+  - [ ] Role-based navigation menus
+  - [ ] Responsive behavior (hamburger menu on mobile)
+- [ ] Create `Sidebar` navigation with role-based menu items
+- [ ] Add notification bell with count badge and dropdown
+- [ ] Implement profile dropdown with settings and logout
+
+### **Dashboard APIs & Components**
+- [ ] Create `analytics` app: `python manage.py startapp analytics`
+- [ ] Implement role-specific dashboard endpoints:
+  - [ ] `GET /api/dashboard/hr-admin` - Company-wide data
+  - [ ] `GET /api/dashboard/manager` - Team performance (department-filtered)
+  - [ ] `GET /api/dashboard/individual` - Personal metrics only
+- [ ] Add role-based data filtering to all endpoints
+- [ ] Include team assignment status in dashboard data
+
+### **Role-Specific Dashboards**
+- [ ] Create `HRAdminDashboard` with company overview and department cards
+- [ ] Create `ManagerDashboard` with:
+  - [ ] Assigned objectives section
+  - [ ] Team overview (only show if team assigned)
+  - [ ] "Add Team Members" empty state if no team
+- [ ] Create `IndividualDashboard` with:
+  - [ ] Current goals overview
+  - [ ] Manager info display
+  - [ ] "No manager assigned" warning if applicable
+- [ ] Add loading states and skeleton screens for all dashboards
+
+### **Critical Edge Cases Implementation**
+- [ ] Handle "No team assigned" state for Managers
+- [ ] Handle "No manager assigned" state for Individuals
+- [ ] Handle "No objectives" state for all roles
+- [ ] Handle "No data" states with proper empty state components
+- [ ] Add proper error boundaries and fallback UI
+
+---
+
+## **Phase 4: OKR Module - Objectives, Goals & Tasks**
+
+### **Backend OKR Structure**
+- [ ] Create `okr` app: `python manage.py startapp okr`
+- [ ] Create models with business rule constraints:
+  - [ ] `Objective` model (owner_id points to managers only)
+  - [ ] `Goal` model with objective_id foreign key
+  - [ ] `IndividualTask` model with goal_id foreign key
+  - [ ] `TaskUpdate` model for progress history
+- [ ] Add database indexes on all foreign keys
+- [ ] Implement cascade deletion protection
+- [ ] Add timeline validation constraints
+
+### **Timeline Validation (Critical for Preventing Bugs)**
+- [ ] Add model validators:
+  - [ ] Task due date ≤ Goal due date
+  - [ ] Goal due date ≤ Objective end date
+  - [ ] Cannot create children for overdue parents
+  - [ ] Auto-lock overdue items (disable editing/adding)
+- [ ] Create timeline conflict detection
+- [ ] Add date range validation in forms
+
+### **HR Admin - Objectives Management**
+- [ ] Implement objectives endpoints with business rules:
+  - [ ] `GET /api/objectives` with status/department/date filters
+  - [ ] `POST /api/objectives` (HR Admin only)
+  - [ ] `PUT /api/objectives/{id}` (HR Admin only, Draft status only)
+  - [ ] `DELETE /api/objectives/{id}` (HR Admin only, no active goals)
+  - [ ] `GET /api/objectives/{id}/progress` with rollup calculation
+- [ ] Create `ObjectivesManagement` page with comprehensive filters
+- [ ] Create `CreateObjectiveModal` with manager assignment
+- [ ] Add objective progress visualization
+- [ ] Implement duplicate title prevention
+
+### **Manager - Team Goals Management**
+- [ ] Implement goals endpoints with assignment validation:
+  - [ ] `GET /api/objectives/{objective_id}/goals`
+  - [ ] `POST /api/objectives/{objective_id}/goals` (Manager only)
+  - [ ] `PUT /api/goals/{id}` (Manager only, Not Started status only)
+  - [ ] `DELETE /api/goals/{id}` (Manager only, no active tasks)
+  - [ ] `GET /api/goals/my-team` (direct reports only)
+- [ ] Add assignment validation: can only assign to direct reports
+- [ ] Create `TeamGoalsManagement` page with multi-filters
+- [ ] Create `CreateGoalModal` with team member assignment
+- [ ] Add bulk operations support
+- [ ] Implement goal title uniqueness within objective
+
+### **Individual - Task Management**
+- [ ] Implement tasks endpoints with ownership validation:
+  - [ ] `GET /api/tasks/my-tasks` (own tasks only)
+  - [ ] `POST /api/goals/{goal_id}/tasks` (for assigned goals only)
+  - [ ] `PUT /api/tasks/{id}/progress` (own tasks only)
+  - [ ] `POST /api/tasks/{task_id}/updates` for progress history
+  - [ ] `PUT /api/tasks/{id}/block` for blocker status
+- [ ] Create `MyTasks` page with table/card view toggle
+- [ ] Create `TaskProgressModal` with evidence links
+- [ ] Add blocker status handling with manager notification
+- [ ] Implement task title uniqueness within goal
+
+### **Cross-Role Notifications (Critical Integration)**
+- [ ] Manager notification when Individual updates task progress
+- [ ] Individual notification when Manager assigns new goal
+- [ ] HR Admin notification when objectives reach completion
+- [ ] Manager notification when Individual blocks task
+- [ ] Auto-notification when items become overdue
+
+---
+
+## **Phase 5: Continuous Feedback System**
+
+### **Backend Feedback Structure**
+- [ ] Create `feedback` app: `python manage.py startapp feedback`
+- [ ] Create models with privacy controls:
+  - [ ] `Feedback` model with from_user, to_user, type, visibility
+  - [ ] `FeedbackTag` model for categorization
+  - [ ] `FeedbackComment` model for threaded discussions
+- [ ] Implement feedback endpoints:
+  - [ ] `GET /api/feedback/received` (own feedback only)
+  - [ ] `GET /api/feedback/given` (own given feedback)
+  - [ ] `POST /api/feedback` with tag support
+  - [ ] `GET /api/feedback/team-summary` (Manager, team only)
+  - [ ] `GET /api/feedback/tags` for tag management
+
+### **Feedback Privacy & Anonymous Protection**
+- [ ] Implement anonymous feedback source hiding
+- [ ] Add privacy controls for peer reviews
+- [ ] Create aggregated anonymous feedback display
+- [ ] Ensure Manager cannot see anonymous sources
+- [ ] Add feedback visibility settings (Private/Public)
+
+### **Feedback Management UI**
+- [ ] Enhance `GlobalFeedbackModal` with full functionality
+- [ ] Create Manager `TeamFeedbackOverview` with individual sections
+- [ ] Add feedback volume charts and tag analytics
+- [ ] Create Individual feedback tabs (received/given/history)
+- [ ] Implement feedback threading with comments
+- [ ] Add feedback analytics for managers (team performance insights)
+
+### **Feedback Configuration (HR Admin)**
+- [ ] Create `FeedbackSettings` page under HR Admin settings
+- [ ] Create tag management section:
+  - [ ] Display current tags, add new tags, delete unused tags
+  - [ ] Predefined categories: Communication, Collaboration, Leadership, Technical Skills
+- [ ] Add feedback type configuration
+- [ ] Set default visibility settings
+
+---
+
+## **Phase 6: Performance Review System**
+
+### **Backend Review Structure**
+- [ ] Create `reviews` app: `python manage.py startapp reviews`
+- [ ] Create models with timeline validation:
+  - [ ] `ReviewCycle` model with phase timeline fields
+  - [ ] `ReviewParticipant` model with role assignments
+  - [ ] `SelfAssessment` model with competency ratings
+  - [ ] `PeerReview` model with anonymity controls
+  - [ ] `ManagerReview` model with overall ratings
+  - [ ] `UpwardReview` model for manager feedback (anonymous)
+  - [ ] `ReviewMeeting` model for scheduling
+
+### **Review Cycle Management (HR Admin)**
+- [ ] Implement review cycle endpoints:
+  - [ ] `POST /api/review-cycles` (HR Admin only)
+  - [ ] `GET /api/review-cycles/active` (all participants)
+  - [ ] `POST /api/review-cycles/{id}/participants` (HR Admin only)
+  - [ ] `PUT /api/review-cycles/{id}/extend-deadline` (HR Admin only)
+- [ ] Create `ReviewCyclesManagement` page with cycle oversight
+- [ ] Create multi-step `CreateReviewCycleModal` with:
+  - [ ] Timeline configuration (Self-Assessment → Peer Review → Manager Review → Meetings)
+  - [ ] Participant selection by department
+  - [ ] Anonymity settings configuration
+- [ ] Add cycle overlap prevention validation
+- [ ] Implement cycle phase management controls
+
+### **Peer Review Assignment System**
+- [ ] Create `PeerReviewAssignment` model
+- [ ] Implement assignment endpoints:
+  - [ ] `GET /api/review-cycles/{cycle_id}/peer-assignments`
+  - [ ] `POST /api/review-cycles/{cycle_id}/peer-assignments` (HR Admin)
+- [ ] Add assignment algorithm (manual assignment for MVP)
+- [ ] Create `PeerReviewAssignmentModal` for HR Admin
+- [ ] Show assigned peer reviews in Individual dashboard
+
+### **Self-Assessment Flow**
+- [ ] Implement self-assessment endpoints:
+  - [ ] `GET /api/review-cycles/{cycle_id}/self-assessment`
+  - [ ] `POST /api/self-assessments` with goal achievements
+  - [ ] `PUT /api/self-assessments/{id}` (own assessments only)
+- [ ] Create `SelfAssessmentForm` with:
+  - [ ] Goal achievement review section
+  - [ ] Competency self-ratings (1-5 scale)
+  - [ ] Development goals section
+  - [ ] Overall reflection
+- [ ] Implement auto-save every 30 seconds
+- [ ] Add deadline validation and form lockdown
+
+### **Peer Review Process**
+- [ ] Implement peer review endpoints:
+  - [ ] `GET /api/review-cycles/{cycle_id}/peer-reviews`
+  - [ ] `POST /api/peer-reviews` with anonymity controls
+  - [ ] `PUT /api/peer-reviews/{id}/submit` (final submission)
+- [ ] Create `PeerReviewForm` with:
+  - [ ] Collaboration effectiveness ratings
+  - [ ] Strengths and development areas
+  - [ ] Anonymous submission toggle
+- [ ] Show assigned peers from HR Admin assignments
+- [ ] Implement submission deadline enforcement
+
+### **Manager Review Flow**
+- [ ] Implement manager review endpoints:
+  - [ ] `GET /api/review-cycles/{cycle_id}/manager-reviews`
+  - [ ] `POST /api/manager-reviews` with team member assessments
+  - [ ] `GET /api/manager-reviews/{id}/context` (self + peer review data)
+- [ ] Create `ManagerReviewForm` showing:
+  - [ ] Employee self-assessment context
+  - [ ] Peer review summaries (anonymized)
+  - [ ] Goal achievement evaluation
+  - [ ] Overall performance rating
+  - [ ] Development plan section
+- [ ] Add meeting scheduling functionality
+- [ ] Implement team review dashboard
+
+### **Upward Review Process (Anonymous)**
+- [ ] Implement upward review endpoints:
+  - [ ] `GET /api/review-cycles/{cycle_id}/upward-review`
+  - [ ] `POST /api/upward-reviews` (anonymous submission)
+  - [ ] `GET /api/upward-reviews/aggregated` (Manager view, no sources)
+- [ ] Create `UpwardReviewForm` with:
+  - [ ] Management effectiveness rating (1-5)
+  - [ ] Communication and support ratings
+  - [ ] Improvement suggestions
+  - [ ] Anonymous submission (always enabled)
+- [ ] Add to Individual review dashboard
+- [ ] Show aggregated upward feedback to Manager (no individual sources)
+
+---
+
+## **Phase 7: Analytics & Reporting**
+
+### **Role-Based Analytics Access**
+- [ ] Implement analytics endpoints with access control:
+  - [ ] `GET /api/analytics/company-overview` (HR Admin only)
+  - [ ] `GET /api/analytics/department/{id}` (HR Admin only)
+  - [ ] `GET /api/analytics/team-performance` (Manager, own team only)
+  - [ ] `GET /api/analytics/individual-summary` (Individual, own data only)
+- [ ] Add data visibility constraints per role
+- [ ] Implement department-based filtering for managers
+
+### **Company Analytics (HR Admin)**
+- [ ] Create `CompanyAnalytics` page with:
+  - [ ] Objective completion trends across departments
+  - [ ] Goal achievement analysis by priority/manager
+  - [ ] Review cycle participation and completion rates
+  - [ ] Feedback volume and sentiment trends
+  - [ ] Employee engagement metrics
+- [ ] Add department comparison charts
+- [ ] Implement predictive analytics for goal completion
+
+### **Manager Team Analytics**
+- [ ] Create `ManagerReports` page with:
+  - [ ] Team performance dashboard
+  - [ ] Individual contributor progress tracking
+  - [ ] Feedback analysis for team members
+  - [ ] Goal completion patterns
+  - [ ] Team engagement trends
+- [ ] Add time period selectors and filters
+- [ ] Implement export functionality (PDF/Excel)
+
+### **Individual Progress View**
+- [ ] Create `MyProgress` page with:
+  - [ ] Personal goal achievement trends
+  - [ ] Task completion velocity
+  - [ ] Feedback received analysis
+  - [ ] Competency development tracking
+  - [ ] Career progression insights
+- [ ] Add time period comparisons
+- [ ] Implement personal development recommendations
+
+### **Reports Module**
+- [ ] Create comprehensive reporting system:
+  - [ ] Role-based report templates
+  - [ ] Custom report builder with filters
+  - [ ] Scheduled report generation
+  - [ ] Export in multiple formats
+- [ ] Add report sharing controls
+- [ ] Implement report access audit trails
+
+---
+
+## **Phase 8: In-App Notifications & Real-time Updates**
+
+### **Notification System (In-App Only)**
+- [ ] Create `notifications` app: `python manage.py startapp notifications`
+- [ ] Create `Notification` model with types and priorities
+- [ ] Implement notification endpoints:
+  - [ ] `GET /api/notifications` (own notifications only)
+  - [ ] `PUT /api/notifications/{id}/read` (mark as read)
+  - [ ] `PUT /api/notifications/mark-all-read`
+  - [ ] `DELETE /api/notifications/{id}` (dismiss)
+- [ ] Create notification templates for all trigger events
+- [ ] Add notification preferences per user
+
+### **Real-time Notification UI**
+- [ ] Enhance notification bell component with:
+  - [ ] Unread count badge
+  - [ ] Notification dropdown with recent items
+  - [ ] Real-time updates using WebSocket or polling
+  - [ ] Mark as read functionality
+  - [ ] Navigate to relevant page on click
+- [ ] Create `NotificationsPage` for full notification history
+- [ ] Add notification preferences in user settings
+- [ ] Implement notification batching for bulk operations
+
+### **Notification Triggers**
+- [ ] Goal assignment notifications
+- [ ] Task progress update notifications
+- [ ] Feedback received notifications
+- [ ] Review deadline reminders
+- [ ] Objective completion notifications
+- [ ] Blocked task notifications
+- [ ] Meeting scheduled notifications
+- [ ] System announcements (HR Admin)
+
+### **System Announcements (HR Admin)**
+- [ ] Create system announcement functionality
+- [ ] Add announcement creation in HR Admin settings
+- [ ] Implement company-wide notification broadcast
+- [ ] Add announcement scheduling and expiration
+- [ ] Create announcement templates
+
+---
+
+## **Phase 9: AI Integration (Optional Enhancement)**
+
+### **OpenAI Setup**
+- [ ] Create `ai_integration` app: `python manage.py startapp ai_integration`
+- [ ] Configure OpenAI client with API key management
+- [ ] Create prompt templates for each review type
+- [ ] Add comprehensive error handling for API failures
+- [ ] Implement rate limiting and usage tracking
+
+### **AI Features Implementation**
+- [ ] Implement AI endpoints with confidence scoring:
+  - [ ] `POST /api/ai/reviews/generate-draft` (self-assessment)
+  - [ ] `POST /api/ai/feedback/generate-suggestions`
+  - [ ] `POST /api/ai/goals/generate-tasks`
+  - [ ] `POST /api/ai/sentiment/analyze-feedback`
+- [ ] Add "Generate Draft" buttons to review forms
+- [ ] Create AI confidence indicators
+- [ ] Add sentiment analysis for feedback trends
+
+### **AI Configuration (HR Admin)**
+- [ ] Create `AISettings` page with:
+  - [ ] Enable/disable AI features toggle
+  - [ ] Confidence threshold settings
+  - [ ] Data privacy controls
+  - [ ] AI usage analytics
+- [ ] Add AI feature flags to user permissions
+- [ ] Create AI usage monitoring dashboard
+
+### **Sentiment Analysis**
+- [ ] Implement sentiment scoring for feedback
+- [ ] Add sentiment dashboard for managers
+- [ ] Create alerts for concerning sentiment patterns
+- [ ] Add sentiment trends to analytics
+
+---
+
+## **Phase 10: Testing, Polish & Deployment**
+
+### **Backend Testing**
+- [ ] Write comprehensive model tests with factory_boy
+- [ ] Test all API endpoints with proper authentication
+- [ ] Test role-based permission system thoroughly
+- [ ] Test business logic (progress rollup, status transitions)
+- [ ] Test edge cases and validation constraints
+- [ ] Achieve 85% code coverage minimum
+
+### **Frontend Testing**
+- [ ] Test authentication and role-based routing
+- [ ] Test all form validations and error states
+- [ ] Test cross-role interactions and notifications
+- [ ] Test responsive design across devices
+- [ ] Add accessibility testing (keyboard navigation, screen readers)
+- [ ] Test all empty states and error boundaries
+
+### **UI Polish & Accessibility**
+- [ ] Add comprehensive loading skeletons
+- [ ] Implement proper error boundaries
+- [ ] Add empty states with illustrations
+- [ ] Ensure mobile responsiveness across all screens
+- [ ] Add keyboard navigation support
+- [ ] Test all status badge colors and interactions
+- [ ] Verify responsive breakpoints
+- [ ] Add focus management for modals
+- [ ] Test screen reader compatibility
+
+### **Performance Optimization**
+- [ ] Optimize API query performance with proper indexing
+- [ ] Implement frontend code splitting
+- [ ] Add image optimization and lazy loading
+- [ ] Optimize bundle size and eliminate unused code
+- [ ] Add performance monitoring
+- [ ] Implement caching strategies
+
+### **Deployment Preparation**
+- [ ] Create production settings configuration
+- [ ] Set up environment variable management
+- [ ] Configure production database settings
+- [ ] Set up static file serving and CDN
+- [ ] Configure security headers and HTTPS
+- [ ] Create deployment scripts and CI/CD pipeline
+- [ ] Set up monitoring and logging
+- [ ] Create backup and recovery procedures
+
+---
+
+## **🎯 Acceptance Criteria**
+
+### **Authentication & Access Control**
+- [ ] Users can self-register with proper role selection
+- [ ] Individual Contributors must select manager (cannot proceed without)
+- [ ] Managers can add/remove team members
+- [ ] JWT tokens expire and refresh correctly
+- [ ] Role-based redirects work properly
+- [ ] All routes are protected with proper access control
+
+### **Business Rules Enforcement**
+- [ ] Managers can only manage direct reports in same department
+- [ ] Timeline validation prevents invalid date assignments
+- [ ] Status-based editing restrictions work correctly
+- [ ] Cascade deletion protection prevents data loss
+- [ ] Progress auto-calculation works accurately
+- [ ] Overdue item lockdown prevents further modifications
+
+### **OKR System**
+- [ ] HR Admin can create/edit objectives with manager assignment
+- [ ] Managers can create team goals with proper assignment validation
+- [ ] Individuals can update task progress with evidence
+- [ ] Progress rolls up correctly through task → goal → objective
+- [ ] All status badges display correctly with proper colors
+
+### **Feedback System**
+- [ ] Global feedback modal accessible from any page
+- [ ] Managers see team feedback summary (team members only)
+- [ ] Anonymous feedback sources properly protected
+- [ ] Feedback tags and categorization work correctly
+- [ ] Privacy settings respected across all feedback
+
+### **Review System**
+- [ ] Review cycles execute in proper timeline order
+- [ ] Self-assessments can be saved and submitted
+- [ ] Peer review assignments work with anonymity
+- [ ] Manager reviews show proper context (self + peer data)
+- [ ] Upward reviews maintain complete anonymity
+- [ ] All deadlines enforced with proper lockdown
+
+### **Analytics & Reporting**
+- [ ] Role-based analytics access properly enforced
+- [ ] HR Admin sees company-wide data
+- [ ] Managers see team-only data
+- [ ] Individuals see personal data only
+- [ ] Export functionality works for all report types
+
+### **Notifications & Real-time Updates**
+- [ ] In-app notifications work for all trigger events
+- [ ] Notification bell shows accurate counts
+- [ ] Real-time updates reflect across user sessions
+- [ ] Notification preferences can be configured
+- [ ] System announcements reach all users
+
+### **AI Features (Optional)**
+- [ ] AI draft generation provides relevant suggestions
+- [ ] Sentiment analysis identifies concerning patterns
+- [ ] AI confidence scores displayed appropriately
+- [ ] AI features can be toggled on/off by HR Admin
+
+---
+
+## **🚀 Success Metrics**
+
+### **Development Velocity**
+- [ ] Each phase completed within estimated timeframe
+- [ ] Minimal debugging time due to comprehensive business rules
+- [ ] Reusable components accelerate feature development
+- [ ] Cross-role integrations work seamlessly without conflicts
+
+### **User Experience**
+- [ ] All empty states provide clear guidance
+- [ ] Error messages are helpful and actionable
+- [ ] Loading states prevent user confusion
+- [ ] Responsive design works across all devices
+- [ ] Accessibility standards met for all users
+
+### **Data Integrity**
+- [ ] Business rules prevent invalid data states
+- [ ] Timeline validation prevents conflicting dates
+- [ ] Permission system prevents unauthorized access
+- [ ] Progress calculations always accurate
+- [ ] Audit trails capture all critical operations
+
+This execution plan incorporates all the critical success factors from your friend's approach, focusing on shared components, business rules, and edge cases first to prevent debugging issues during development.

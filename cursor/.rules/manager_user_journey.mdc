@@ -1,0 +1,294 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 👨‍💼 **Manager User Journey - AI Performance Review Platform**
+
+## **Quick Navigation**
+- 📋 **Cross-References:** [HR Admin Journey](mdc:hr_admin_user_journey.mdc) | [Individual Journey](mdc:individual_user_journey.mdc) | [Shared Components](mdc:shared_ui_patterns.mdc)
+- 🎯 **Role Permissions:** Create goals for team, manage team performance, participate in reviews
+- 🔗 **Key Interactions:** Goal assignment to Individual Contributors, receiving objectives from HR Admin
+
+---
+
+## **🔐 Authentication & Navigation**
+
+### **Login Flow**
+Success → Redirect to `/dashboard` (Manager Dashboard)
+
+### **Navigation Structure**
+```
+Header: ReviewAI Logo | [Give Feedback] → (see shared_ui_patterns.mdc) | Notifications | Profile
+Sidebar: Dashboard | My Objectives | Team Goals | Feedback | Reviews | Reports
+```
+
+---
+
+## **📊 Manager Dashboard**
+**URL:** `/dashboard` | **Component:** `ManagerDashboard`
+
+### **Main Content Layout**
+```
+├── My Assigned Objectives Section
+│   ├── Objective cards with progress bars
+│   ├── Goals Summary: [Completed/Total]
+│   └── [View Details] → /objectives/{id}
+├── Team Performance Overview
+│   ├── Team Members: [Count]
+│   ├── Active Goals: [Count] 
+│   ├── Overdue Goals: [Count] with red warning
+│   └── [View Team Report] → /reports
+└── Team Member Cards (direct reports only)
+    ├── Active Goals count per member
+    ├── Progress percentages
+    └── [View Details] → /team-goals?assignee={user_id}
+```
+
+### **Edge Cases**
+- **No objectives:** "No objectives assigned. Contact HR to get started."
+- **No team:** "Add team members to start creating goals. Click 'Manage Team'."
+- **All objectives completed:** Show completion celebration + [View Reports]
+
+### **Data Sources**
+- `GET /api/dashboard/manager`
+- `GET /api/objectives?owner_id={current_user}`
+- `GET /api/users/team` (department-filtered)
+
+---
+
+## **🎯 My Objectives Management**
+**URL:** `/objectives` | **Component:** `MyObjectives`
+
+### **Objectives Overview**
+```
+Header: "My Assigned Objectives" | [Create New Goal] Button
+Filters: All | Active | Completed
+
+Each Objective Card:
+├── Title and Status Badge → (see shared_ui_patterns.mdc)
+├── Date Range and Progress Circle
+├── Goals Breakdown:
+│   ├── Total Goals: [Count]
+│   ├── Completed: [Count] 
+│   ├── In Progress: [Count]
+│   └── Blocked: [Count]
+└── Actions: [View Details] [Create Goal] [Analytics]
+```
+
+### **Objective Details Modal**
+```
+Modal Content:
+├── Objective Information (read-only, created by HR Admin)
+├── Goals Progress Table
+│   ├── Goal Title | Assignee | Progress | Status | Due Date
+│   └── Row Actions: [View] [Edit] [Delete]
+├── Team Performance Metrics
+└── Actions: [Close] [Create Goal] [View Analytics]
+```
+
+### **Business Rules**
+- **Cannot edit objective details** (HR Admin only)
+- **Goals must be assigned to direct reports** (department-filtered)
+- **Goal due dates cannot exceed objective timeline**
+- **Auto-complete objective when all goals complete**
+
+---
+
+## **👥 Team Goals Management**
+**URL:** `/team-goals` | **Component:** `TeamGoals`
+
+### **Goals Management Interface**
+```
+Header: "Team Goals Management" | [Create New Goal]
+
+Filters:
+├── Objective: All | [Manager's Objectives List]
+├── Assignee: All | [Direct Reports List]  
+├── Status: All | Not Started | In Progress | Completed | Blocked
+└── Due Date: All | This Week | This Month | Overdue
+
+Goals Table:
+Columns: Goal Title | Objective | Assigned To | Progress | Status | Due Date | Actions
+```
+
+### **Create Goal Modal**
+```
+Form Fields:
+├── Goal Title* (max 100 chars, unique within objective)
+├── Description (max 500 chars)
+├── Parent Objective* (dropdown from manager's objectives)
+├── Assign to Team Member* (dropdown from direct reports)
+├── Due Date* (min: tomorrow, max: objective end date)
+└── Priority: High | Medium | Low
+
+Validation:
+- Title unique within objective
+- Assignee must be direct report (department constraint)
+- Due date within objective timeline
+- All required fields filled
+
+Actions: [Cancel] [Save as Draft] [Create & Assign]
+Success: Goal created + Individual Contributor notified
+```
+
+### **Goal Management Actions**
+- **[View]** → Goal Details Modal
+- **[Edit]** → Edit Goal Modal (only if status = not started)
+- **[Delete]** → Confirmation → `DELETE /api/goals/{id}`
+
+### **Critical Constraints**
+- **Cannot assign to users outside department**
+- **Cannot edit goals after they're started**
+- **Duplicate goal titles within objective → Error**
+
+---
+
+## **💬 Feedback Management**
+**URL:** `/feedback` | **Component:** `FeedbackManagement`
+
+### **Tab Navigation**
+```
+├── Team Overview (active)
+├── Give Feedback → (uses shared_ui_patterns.mdc Global Feedback Modal)
+└── Received Feedback
+```
+
+### **Team Overview Tab**
+```
+├── Feedback Summary Cards
+│   ├── Total Given (30 days): [Count]
+│   ├── Total Received (30 days): [Count]
+│   └── Team Participation: [Percentage]
+├── Individual Team Member Sections
+│   ├── Member photo and name
+│   ├── Feedback received by type: [Counts]
+│   ├── Recent feedback preview
+│   └── [View All] [Give Feedback] buttons
+└── Team Trends Charts
+    ├── Feedback volume over time
+    └── Common feedback tags
+```
+
+### **Cross-Role Interactions**
+- **Give Feedback:** Can give to anyone (not limited to team)
+- **Team Feedback:** Only see team members' feedback
+- **Anonymous Reviews:** Cannot see sources (business rule)
+
+---
+
+## **📝 Reviews Management**
+**URL:** `/reviews` | **Component:** `ReviewsManagement`
+
+### **Active Review Cycle Section**
+```
+Current Cycle Info (if active):
+├── Cycle name and timeline (created by HR Admin)
+├── Current phase indicator
+├── Time remaining
+└── [View Cycle Details] → /admin/review-cycles/{id} (HR Admin reference)
+
+Team Review Status:
+├── Each team member card:
+│   ├── Self-Assessment: Complete/Pending
+│   ├── Peer Reviews: [Count/Expected]
+│   ├── My Manager Review: Status
+│   └── Meeting: Scheduled/Pending
+└── [View Team Summary] button
+```
+
+### **Manager Review Actions**
+```
+My Review Responsibilities:
+├── Self-Assessment: [Complete/Continue]
+├── Manager Reviews to Complete: [Count] (for direct reports)
+├── Peer Reviews: [Count] (colleagues)
+├── Upward Review: [Provide Feedback] (for my manager)
+└── Team Performance Summary: [Create Report]
+```
+
+### **Review Cycle Constraints**
+- **No active cycle:** "No active review cycle. HR Admin will start cycles."
+- **Review submitted after deadline:** "Review period ended"
+- **Team member left mid-cycle:** Gray out their section
+
+---
+
+## **📊 Reports & Analytics**
+**URL:** `/reports` | **Component:** `ManagerReports`
+
+### **Team Performance Reports**
+```
+Report Types:
+├── Objective Completion Rates
+├── Goal Progress Trends
+├── Team Member Performance
+├── Feedback Analysis
+└── Review Cycle Results
+
+Filters:
+├── Time Period: Last Quarter | This Quarter | Custom Range
+├── Team Members: All | [Individual Selection]
+└── Objective: All | [Specific Objective]
+
+Export Options:
+└── [Export PDF] [Export Excel] [Share Report]
+```
+
+---
+
+## **🔗 Integration Points**
+
+### **With HR Admin**
+- **Receives:** Objectives assignments → notification + `/objectives` update
+- **Cannot:** Edit objective details, delete objectives with active goals
+- **Requests:** Access to company-wide analytics → contact HR Admin
+
+### **With Individual Contributors**
+- **Assigns:** Goals → triggers notification to Individual Contributor
+- **Receives:** Task progress updates → reflected in goal progress
+- **Reviews:** Individual's self-assessments during review cycles
+
+### **Cross-Role Permissions**
+- **Can manage:** Direct reports only (department constraint)
+- **Can view:** Team performance data, not individual sensitive data
+- **Cannot access:** Other departments, anonymous feedback sources
+
+---
+
+## **⚠️ Manager-Specific Edge Cases**
+
+### **Team Management**
+```
+No Team Members:
+- Show "Add team members" message
+- Disable goal creation
+- Contact HR Admin for team assignment
+
+Cross-Department Request:
+- Error: "Cannot assign goals outside your department"
+- Filter all dropdowns by department
+```
+
+### **Goal Management**
+```
+Goal After Start:
+- Disable editing after goal status changes to "In Progress"
+- Show "Cannot edit active goals" message
+
+Objective Timeline Conflicts:
+- Prevent goal due dates beyond objective end date
+- Auto-validate date picker constraints
+```
+
+### **Review Cycle Participation**
+```
+Mid-Cycle Team Changes:
+- New team member → automatically included in active cycle
+- Departed team member → maintain data but gray out interface
+- Role change → maintain historical data, update future permissions
+```
+
+---
+
+**Related Files:** [HR Admin Journey](mdc:hr_admin_user_journey.mdc) | [Individual Journey](mdc:individual_user_journey.mdc) | [Shared Components](mdc:shared_ui_patterns.mdc)

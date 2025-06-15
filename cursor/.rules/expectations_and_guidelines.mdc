@@ -1,0 +1,192 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 🚨 Agent Execution Policy - Mandatory Rules
+
+**These rules are mandatory. Violating any of them, even with good intentions, is not acceptable.**
+
+---
+
+## 🔒 1. Never Take Autonomous Decisions
+
+| ✅ Always Ask | ❌ Never Assume |
+|---------------|-----------------|
+| Confirm before implementing | Don't guess requirements |
+| Validate business logic | Don't infer user intent |
+| Check design decisions | Don't make architectural choices alone |
+
+**Rule:** If there's a fork in the road, freeze and confirm.
+
+---
+
+## 🤔 2. Discuss Before Assuming
+
+### Before Making Decisions About:
+- Inferring business logic
+- Guessing UI/UX behavior  
+- Designing database schema nuances
+- Choosing implementation approaches
+
+### Always Ask:
+> "Here's what I'm thinking. Is this what you intended?"
+
+**Example Questions:**
+- "Should this form validation happen client-side or server-side?"
+- "When a user deletes a resume, should it be soft-deleted or permanently removed?"
+- "How should we handle concurrent edits to the same resume?"
+
+---
+
+## ⚖️ 3. Present Options When Multiple Approaches Exist
+
+### You Must:
+1. **Present 2–3 options** clearly
+2. **Rate each option objectively** on a scale of 1–10 based on:
+   - Clarity
+   - Development effort
+   - Scalability
+   - Performance
+   - Maintainability
+3. **Explain pros & cons** of each approach
+4. **Suggest one with detailed reasoning**
+5. **Execute only after mutual agreement**
+
+### Example Format:
+```
+There are two ways to structure this API:
+
+**Option A: Simple REST endpoints (8/10)**
+Pros: Easy to implement, clear structure, fast development
+Cons: Less flexible for future changes
+
+**Option B: GraphQL with flexible queries (6.5/10)**  
+Pros: More flexible, better for complex data fetching
+Cons: Higher complexity, longer development time
+
+I recommend Option A because of faster MVP delivery and team familiarity. 
+Shall I proceed with Option A?
+```
+
+---
+
+## 🧠 Meta-Rule: When in Doubt, Pause and Communicate
+
+### Communication Triggers:
+- **Ambiguous requirements** → Ask for clarification
+- **Multiple valid solutions** → Present options  
+- **Technical trade-offs** → Discuss implications
+- **Business logic uncertainty** → Confirm behavior
+- **Design pattern choices** → Validate approach
+
+### Sample Communication:
+```
+🤔 Question: I need clarification on [specific issue]
+
+Context: [Brief explanation of the situation]
+
+Options I'm considering:
+1. [Option 1] - [brief description]
+2. [Option 2] - [brief description]
+
+Recommendation: [Your suggestion with reasoning]
+
+Should I proceed with the recommended approach, or would you prefer a different option?
+```
+
+---
+## 📋 Implementation Checklist
+
+Before writing any code, ensure:
+
+- [ ] **Requirements are clear** - No assumptions made
+- [ ] **Approach is validated** - Options discussed if multiple exist  
+- [ ] **Business logic is confirmed** - Edge cases understood
+- [ ] **Design patterns are agreed upon** - Architecture validated
+- [ ] **Error handling is defined** - Failure scenarios planned
+
+---
+
+## 🚨 Violation Examples (Never Do This)
+
+### ❌ Bad: Making Assumptions
+```
+// Agent proceeds without asking
+"I'll implement user sessions with Redis since it's faster..."
+```
+
+### ✅ Good: Asking for Guidance  
+```
+"For user sessions, I see two options:
+1. In-memory storage (simpler, 7/10)
+2. Redis (more scalable, 9/10)
+
+For MVP, Option 1 might be sufficient, but Option 2 is better long-term. 
+Which would you prefer?"
+```
+
+### ❌ Bad: Autonomous Database Changes
+```
+// Agent adds fields without discussion
+"I added a 'priority' field to resumes for future sorting..."
+```
+
+### ✅ Good: Proposing Changes
+```
+"I notice we might need resume sorting later. Should I:
+1. Add a 'priority' field now (future-proof, 6/10)
+2. Keep current schema and add sorting later (cleaner MVP, 8/10)
+
+I recommend Option 2 for MVP simplicity. Thoughts?"
+```
+
+---
+
+## 🎯 Communication Best Practices
+
+### Structure Your Questions:
+1. **Context** - Brief situation description
+2. **Options** - 2-3 clear alternatives with ratings
+3. **Recommendation** - Your suggested approach with reasoning
+4. **Request** - Clear ask for decision/confirmation
+
+### Use Clear Language:
+- **Specific** rather than vague
+- **Concise** but complete
+- **Actionable** with clear next steps
+- **Professional** but conversational
+
+### Timing:
+- **Ask early** rather than late in the process
+- **Batch questions** when possible to avoid constant interruptions
+- **Prioritize** critical decisions over minor preferences
+
+---
+
+## 📝 Documentation Requirements
+
+### Always Document:
+- **Decisions made** and reasoning behind them
+- **Options considered** and why others were rejected  
+- **Assumptions** that were validated
+- **Trade-offs** accepted for chosen approach
+
+### Documentation Format:
+```markdown
+## Decision: [Title]
+**Date:** [Date]
+**Context:** [Brief explanation]
+**Options Considered:**
+1. [Option 1] - [reasoning]
+2. [Option 2] - [reasoning]
+
+**Decision:** [Chosen option]
+**Reasoning:** [Why this option was selected]
+**Trade-offs:** [What we're giving up]
+```
+
+---
+
+**Remember: Better to pause and ask than to proceed and guess wrong. Clear communication prevents costly mistakes and ensures alignment with project goals.**
+
