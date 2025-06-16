@@ -205,12 +205,12 @@ export function canAccessUser(
   }
   
   // HR Admin can access anyone
-  if (context.isHrAdmin ?? false) {
+  if (context.isHrAdmin) {
     return true;
   }
   
   // Managers can access users in their department
-  if ((context.isManager ?? false) && context.departmentId === targetUserDepartmentId) {
+  if (context.isManager && context.departmentId === targetUserDepartmentId) {
     return true;
   }
   

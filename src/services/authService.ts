@@ -109,15 +109,30 @@ class AuthService {
   // Authentication API calls
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      const response: AxiosResponse<LoginResponse> = await apiClient.post('/auth/login/', credentials);
+      const response: AxiosResponse<any> = await apiClient.post('/auth/login/', credentials);
       
-      if (response.data.success) {
-        this.setTokens(response.data.data.tokens);
-        this.setUser(response.data.data.user);
+      // Django returns tokens directly, not wrapped in data.tokens
+      if (response.data.access && response.data.user) {
+        const tokens = {
+          access: response.data.access,
+          refresh: response.data.refresh
+        };
+        this.setTokens(tokens);
+        this.setUser(response.data.user);
         this.setupAxiosInterceptors();
+        
+        // Return in expected format
+        return {
+          success: true,
+          data: {
+            user: response.data.user,
+            tokens: tokens
+          },
+          message: response.data.message
+        };
+      } else {
+        throw new Error('Invalid response format');
       }
-      
-      return response.data;
     } catch (error: any) {
       throw this.handleAuthError(error);
     }
@@ -125,15 +140,26 @@ class AuthService {
 
   async signup(userData: SignupRequest): Promise<SignupResponse> {
     try {
-      const response: AxiosResponse<SignupResponse> = await apiClient.post('/auth/signup/', userData);
+      const response: AxiosResponse<any> = await apiClient.post('/auth/signup/', userData);
       
-      if (response.data.success) {
-        this.setTokens(response.data.data.tokens);
-        this.setUser(response.data.data.user);
+      // Django returns tokens directly, not wrapped in data.tokens
+      if (response.data.tokens && response.data.user) {
+        this.setTokens(response.data.tokens);
+        this.setUser(response.data.user);
         this.setupAxiosInterceptors();
+        
+        // Return in expected format
+        return {
+          success: true,
+          data: {
+            user: response.data.user,
+            tokens: response.data.tokens
+          },
+          message: response.data.message
+        };
+      } else {
+        throw new Error('Invalid response format');
       }
-      
-      return response.data;
     } catch (error: any) {
       throw this.handleAuthError(error);
     }
@@ -154,16 +180,21 @@ class AuthService {
   }
 
   async refreshAccessToken(refreshToken: string): Promise<{ data: { tokens: AuthTokens } }> {
-    const response = await apiClient.post('/auth/refresh/', { refresh: refreshToken });
+    const response = await apiClient.post('/auth/token/refresh/', { refresh: refreshToken });
     return response.data;
   }
 
   // Profile management
   async getUserProfile(): Promise<UserProfile> {
     try {
-      const response: AxiosResponse<{ success: boolean; data: UserProfile }> = 
-        await apiClient.get('/auth/profile/');
-      return response.data.data;
+      const response: AxiosResponse<any> = await apiClient.get('/auth/me/');
+      // Django returns user data directly
+      return {
+        user: response.data,
+        department: response.data.department || {},
+        manager: response.data.manager,
+        team_members: response.data.team_members || []
+      };
     } catch (error: any) {
       throw this.handleAuthError(error);
     }
@@ -172,7 +203,7 @@ class AuthService {
   async updateProfile(profileData: Partial<User>): Promise<User> {
     try {
       const response: AxiosResponse<{ success: boolean; data: User }> = 
-        await apiClient.put('/auth/profile/', profileData);
+        await apiClient.put('/auth/me/', profileData);
       
       if (response.data.success) {
         this.setUser(response.data.data);

@@ -109,15 +109,30 @@ class AuthService {
   // Authentication API calls
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      const response: AxiosResponse<LoginResponse> = await apiClient.post('/auth/login/', credentials);
+      const response: AxiosResponse<any> = await apiClient.post('/auth/login/', credentials);
       
-      if (response.data.success) {
-        this.setTokens(response.data.data.tokens);
-        this.setUser(response.data.data.user);
+      // Handle Django's direct response format
+      if (response.data.access && response.data.user) {
+        const tokens = {
+          access: response.data.access,
+          refresh: response.data.refresh
+        };
+        this.setTokens(tokens);
+        this.setUser(response.data.user);
         this.setupAxiosInterceptors();
+        
+        // Return in expected format
+        return {
+          success: true,
+          data: {
+            tokens,
+            user: response.data.user
+          },
+          message: response.data.message || 'Login successful'
+        };
+      } else {
+        throw new Error('Invalid response format');
       }
-      
-      return response.data;
     } catch (error: any) {
       throw this.handleAuthError(error);
     }
@@ -125,15 +140,30 @@ class AuthService {
 
   async signup(userData: SignupRequest): Promise<SignupResponse> {
     try {
-      const response: AxiosResponse<SignupResponse> = await apiClient.post('/auth/signup/', userData);
+      const response: AxiosResponse<any> = await apiClient.post('/auth/signup/', userData);
       
-      if (response.data.success) {
-        this.setTokens(response.data.data.tokens);
-        this.setUser(response.data.data.user);
+      // Handle Django's direct response format
+      if (response.data.access && response.data.user) {
+        const tokens = {
+          access: response.data.access,
+          refresh: response.data.refresh
+        };
+        this.setTokens(tokens);
+        this.setUser(response.data.user);
         this.setupAxiosInterceptors();
+        
+        // Return in expected format
+        return {
+          success: true,
+          data: {
+            tokens,
+            user: response.data.user
+          },
+          message: response.data.message || 'Signup successful'
+        };
+      } else {
+        throw new Error('Invalid response format');
       }
-      
-      return response.data;
     } catch (error: any) {
       throw this.handleAuthError(error);
     }
@@ -143,7 +173,7 @@ class AuthService {
     try {
       const refreshToken = this.getRefreshToken();
       if (refreshToken) {
-        await apiClient.post('/auth/logout/', { refresh: refreshToken });
+        await apiClient.post('/auth/logout/', { refresh_token: refreshToken });
       }
     } catch (error) {
       // Continue with logout even if API call fails

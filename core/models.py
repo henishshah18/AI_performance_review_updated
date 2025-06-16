@@ -92,9 +92,8 @@ class CustomUserManager(BaseUserManager):
         if extra_fields['role'] not in valid_roles:
             raise ValueError(f'Invalid role. Must be one of: {valid_roles}')
         
-        # Ensure department is provided for non-HR users
-        if extra_fields['role'] != 'hr_admin' and 'department' not in extra_fields:
-            raise ValueError('Department is required for non-HR users')
+        # Department can be assigned later for non-HR users during onboarding
+        # This allows users to sign up and then be assigned to departments
         
         # Create user instance
         user = self.model(email=email, **extra_fields)
@@ -152,6 +151,8 @@ class User(AbstractUser):
         Department,
         on_delete=models.PROTECT,
         related_name='users',
+        null=True,
+        blank=True,
         help_text="User's department"
     )
     manager = models.ForeignKey(

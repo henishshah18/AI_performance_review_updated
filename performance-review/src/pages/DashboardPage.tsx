@@ -1,41 +1,58 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import HRDashboard from './HRDashboard';
+import ManagerDashboard from './manager/ManagerDashboard';
+import IndividualDashboard from './individual/IndividualDashboard';
 
 export function DashboardPage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                Welcome to ReviewAI Dashboard
-              </h1>
-              <p className="text-lg text-gray-600 mb-6">
-                Hello, {user?.first_name} {user?.last_name}!
-              </p>
-              <div className="bg-white rounded-lg shadow p-6 max-w-md mx-auto">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Profile</h2>
-                <div className="space-y-2 text-left">
-                  <p><strong>Role:</strong> {user?.role?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
-                  <p><strong>Email:</strong> {user?.email}</p>
-                  {user?.role_title && <p><strong>Title:</strong> {user.role_title}</p>}
-                  {user?.phone && <p><strong>Phone:</strong> {user.phone}</p>}
-                </div>
-              </div>
-              <div className="mt-8">
-                <p className="text-sm text-gray-500">
-                  Phase 3 will include role-specific dashboards with analytics, objectives, and team management.
-                </p>
-              </div>
-            </div>
-          </div>
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // Route to role-specific dashboard
+  switch (user.role) {
+    case 'hr_admin':
+      return <HRDashboard />;
+    case 'manager':
+      return <ManagerDashboard />;
+    case 'individual_contributor':
+      return <IndividualDashboard />;
+    default:
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900">Invalid Role</h1>
+            <p className="text-gray-600 mt-2">
+              Your account role is not recognized. Please contact support.
+            </p>
+            <button
+              onClick={() => navigate('/login')}
+              className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      );
+  }
 }
 
 export default DashboardPage; 

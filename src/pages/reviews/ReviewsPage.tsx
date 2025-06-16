@@ -9,6 +9,7 @@ import {
 import { ReviewDashboard } from '../../components/reviews/ReviewDashboard';
 import { ReviewAnalytics } from '../../components/reviews/ReviewAnalytics';
 import { ReviewCycleManager } from '../../components/reviews/ReviewCycleManager';
+import { ReviewManagement } from '../../components/reviews/ReviewManagement';
 import { useAuth } from '../../contexts/AuthContext';
 
 type TabType = 'dashboard' | 'analytics' | 'cycles' | 'reviews';
@@ -61,15 +62,7 @@ export const ReviewsPage: React.FC = () => {
       case 'cycles':
         return <ReviewCycleManager />;
       case 'reviews':
-        return (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-            <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Review Management</h3>
-            <p className="text-gray-600">
-              Individual review management features coming soon.
-            </p>
-          </div>
-        );
+        return <ReviewManagement />;
       default:
         return <ReviewDashboard />;
     }

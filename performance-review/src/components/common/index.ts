@@ -8,6 +8,7 @@ export { default as ErrorMessage } from './ErrorMessage';
 export { default as EmptyState, NoObjectives, NoTeamMembers, NoGoals, NoTasks, NoFeedback, NoReviews, SearchNoResults } from './EmptyState';
 export { default as ProgressBar } from './ProgressBar';
 export { default as CircularProgress } from './CircularProgress';
+export { default as Button } from './Button';
 
 export type { StatusBadgeProps } from './StatusBadge';
 export type { ModalProps } from './Modal';
@@ -16,4 +17,5 @@ export type { LoadingSkeletonProps } from './LoadingSkeleton';
 export type { ErrorMessageProps } from './ErrorMessage';
 export type { EmptyStateProps } from './EmptyState';
 export type { ProgressBarProps } from './ProgressBar';
-export type { CircularProgressProps } from './CircularProgress'; 
+export type { CircularProgressProps } from './CircularProgress';
+export type { ButtonProps } from './Button'; 

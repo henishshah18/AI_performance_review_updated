@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../contexts/AuthContext';
-import { UserRole, Department, ROLE_REDIRECTS } from '../types/auth';
-import authService from '../services/authService';
+import { useToastHelpers } from '../contexts/ToastContext';
+import { UserRole, ROLE_REDIRECTS } from '../types/auth';
 import FormField from '../components/forms/FormField';
 import FormSelect from '../components/forms/FormSelect';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -37,15 +37,11 @@ const signupSchema = Yup.object({
     .oneOf(['hr_admin', 'manager', 'individual_contributor'], 'Please select a valid role')
     .required('Role is required'),
   department_id: Yup.string()
-    .required('Department is required'),
+    .notRequired(),
   manager_id: Yup.string()
-    .when('role', {
-      is: 'individual_contributor',
-      then: (schema) => schema.required('Manager is required for Individual Contributors'),
-      otherwise: (schema) => schema.notRequired(),
-    }),
+    .notRequired(),
   phone: Yup.string()
-    .matches(/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid phone number')
+    .matches(/^[+]?[1-9][\d]{0,15}$/, 'Please enter a valid phone number')
     .notRequired(),
   role_title: Yup.string()
     .max(100, 'Role title must be less than 100 characters')
@@ -62,53 +58,15 @@ const roleOptions = [
 export function SignupPage() {
   const navigate = useNavigate();
   const { signup, isAuthenticated, isLoading, error, clearError, user } = useAuth();
+  const { showSuccess, showError } = useToastHelpers();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [managers, setManagers] = useState<any[]>([]);
-  const [loadingDepartments, setLoadingDepartments] = useState(true);
-  const [loadingManagers, setLoadingManagers] = useState(false);
-
+  
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
       navigate(ROLE_REDIRECTS[user.role], { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
-
-  // Load departments on component mount
-  useEffect(() => {
-    loadDepartments();
-  }, []);
-
-  // Clear errors when component mounts
-  useEffect(() => {
-    clearError();
-  }, [clearError]);
-
-  const loadDepartments = async () => {
-    try {
-      setLoadingDepartments(true);
-      const departmentList = await authService.getDepartments();
-      setDepartments(departmentList);
-    } catch (error) {
-      console.error('Failed to load departments:', error);
-    } finally {
-      setLoadingDepartments(false);
-    }
-  };
-
-  const loadManagers = async (departmentId: string) => {
-    try {
-      setLoadingManagers(true);
-      const managerList = await authService.getManagersByDepartment(departmentId);
-      setManagers(managerList);
-    } catch (error) {
-      console.error('Failed to load managers:', error);
-      setManagers([]);
-    } finally {
-      setLoadingManagers(false);
-    }
-  };
 
   const formik = useFormik({
     initialValues: {
@@ -128,32 +86,30 @@ export function SignupPage() {
       setIsSubmitting(true);
       try {
         const { confirmPassword, ...signupData } = values;
-        await signup(signupData as any);
+        // Transform the data to match backend expectations
+        const backendData = {
+          ...signupData,
+          password_confirm: confirmPassword
+        };
+        await signup(backendData as any);
+        
+        // Show success message
+        showSuccess(
+          'Account created successfully!', 
+          'Welcome to ReviewAI. You are now signed in.'
+        );
+        
         // Navigation will be handled by the useEffect above
-      } catch (error) {
-        // Error is handled by the auth context
+      } catch (error: any) {
+        // Show error message
+        const errorMessage = error?.error?.message || error?.message || 'Failed to create account';
+        showError('Signup failed', errorMessage);
         console.error('Signup error:', error);
       } finally {
         setIsSubmitting(false);
       }
     },
   });
-
-  // Handle department change
-  useEffect(() => {
-    if (formik.values.department_id && formik.values.role === 'individual_contributor') {
-      loadManagers(formik.values.department_id);
-      formik.setFieldValue('manager_id', ''); // Reset manager selection
-    }
-  }, [formik.values.department_id, formik.values.role]);
-
-  // Handle role change
-  useEffect(() => {
-    if (formik.values.role !== 'individual_contributor') {
-      formik.setFieldValue('manager_id', ''); // Clear manager if not individual contributor
-      setManagers([]);
-    }
-  }, [formik.values.role]);
 
   const handleRetry = () => {
     clearError();
@@ -167,16 +123,6 @@ export function SignupPage() {
       </div>
     );
   }
-
-  const departmentOptions = departments.map(dept => ({
-    value: dept.id,
-    label: dept.name,
-  }));
-
-  const managerOptions = managers.map(manager => ({
-    value: manager.id,
-    label: `${manager.first_name} ${manager.last_name} (${manager.role_title || 'Manager'})`,
-  }));
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -346,41 +292,29 @@ export function SignupPage() {
                   error={formik.touched.role ? formik.errors.role : undefined}
                   required
                 />
-
-                <FormSelect
-                  id="department_id"
-                  name="department_id"
-                  label="Department"
-                  placeholder={loadingDepartments ? "Loading departments..." : "Select your department"}
-                  value={formik.values.department_id}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  options={departmentOptions}
-                  error={formik.touched.department_id ? formik.errors.department_id : undefined}
-                  required
-                  disabled={loadingDepartments}
-                />
-
-                {formik.values.role === 'individual_contributor' && (
-                  <FormSelect
-                    id="manager_id"
-                    name="manager_id"
-                    label="Manager"
-                    placeholder={
-                      !formik.values.department_id
-                        ? "Please select a department first"
-                        : loadingManagers
-                        ? "Loading managers..."
-                        : "Select your manager"
-                    }
-                    value={formik.values.manager_id}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    options={managerOptions}
-                    error={formik.touched.manager_id ? formik.errors.manager_id : undefined}
-                    required
-                    disabled={!formik.values.department_id || loadingManagers}
-                  />
+                
+                {formik.values.role && formik.values.role !== 'hr_admin' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-blue-800">
+                          Department Assignment
+                        </h3>
+                        <div className="mt-2 text-sm text-blue-700">
+                          <p>
+                            After creating your account, you'll be prompted to select your department and 
+                            {formik.values.role === 'individual_contributor' ? ' manager' : ' team members'} 
+                            to complete your profile setup.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

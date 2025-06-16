@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../contexts/AuthContext';
+import { useToastHelpers } from '../contexts/ToastContext';
 import { ROLE_REDIRECTS } from '../types/auth';
 import FormField from '../components/forms/FormField';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -22,15 +23,24 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated, isLoading, error, clearError, user } = useAuth();
+  const { showSuccess, showError } = useToastHelpers();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
+      // Show success message with user's first name
+      if (user.first_name) {
+        showSuccess('Login successful!', `Welcome back, ${user.first_name}!`);
+      } else {
+        showSuccess('Login successful!', 'Welcome back!');
+      }
+      
       const from = (location.state as any)?.from?.pathname || ROLE_REDIRECTS[user.role];
+      console.log('Redirecting to:', from);
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, user, navigate, location]);
+  }, [isAuthenticated, user, navigate, location, showSuccess]);
 
   // Clear errors when component mounts
   useEffect(() => {
@@ -44,12 +54,20 @@ export function LoginPage() {
     },
     validationSchema: loginSchema,
     onSubmit: async (values) => {
+      console.log('Form submitted with values:', values);
       setIsSubmitting(true);
       try {
+        console.log('Calling login function...');
         await login(values);
-        // Navigation will be handled by the useEffect above
-      } catch (error) {
-        // Error is handled by the auth context
+        console.log('Login successful');
+        
+        // Don't show success message or navigate here - let the useEffect handle it
+        // The useEffect will trigger when isAuthenticated and user state changes
+        
+      } catch (error: any) {
+        // Show error message
+        const errorMessage = error?.error?.message || error?.message || 'Login failed';
+        showError('Login failed', errorMessage);
         console.error('Login error:', error);
       } finally {
         setIsSubmitting(false);
@@ -172,6 +190,13 @@ export function LoginPage() {
               type="submit"
               disabled={isSubmitting || !formik.isValid}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              onClick={() => {
+                console.log('Button clicked');
+                console.log('Form valid:', formik.isValid);
+                console.log('Form errors:', formik.errors);
+                console.log('Form values:', formik.values);
+                console.log('Is submitting:', isSubmitting);
+              }}
             >
               {isSubmitting && (
                 <LoadingSpinner size="sm" className="mr-2" />
@@ -191,6 +216,22 @@ export function LoginPage() {
                 Sign up here
               </Link>
             </p>
+            {/* Add logout option for testing */}
+            <p className="text-xs text-gray-500 mt-2">
+              Already logged in?{' '}
+              <button
+                onClick={() => {
+                  // Clear authentication and reload page
+                  localStorage.removeItem('access_token');
+                  localStorage.removeItem('refresh_token');
+                  localStorage.removeItem('user');
+                  window.location.reload();
+                }}
+                className="font-medium text-red-600 hover:text-red-500 transition-colors underline"
+              >
+                Logout and sign up
+              </button>
+            </p>
           </div>
         </form>
 
@@ -200,7 +241,7 @@ export function LoginPage() {
             <p className="text-xs text-gray-500 mb-4">Demo Accounts (Development Only)</p>
             <div className="grid grid-cols-1 gap-2 text-xs">
               <div className="bg-gray-100 p-2 rounded">
-                <strong>HR Admin:</strong> admin@company.com / password123
+                <strong>HR Admin:</strong> qa_hr_admin@test.com / testpass123
               </div>
               <div className="bg-gray-100 p-2 rounded">
                 <strong>Manager:</strong> manager@company.com / password123

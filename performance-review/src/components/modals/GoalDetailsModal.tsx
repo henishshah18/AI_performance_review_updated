@@ -1,0 +1,1 @@
+import React from "react"; import Modal from "../common/Modal"; interface GoalDetailsModalProps { isOpen: boolean; onClose: () => void; goal: any; tasks: any[]; } export default function GoalDetailsModal({ isOpen, onClose, goal, tasks }: GoalDetailsModalProps) { return <Modal isOpen={isOpen} onClose={onClose} title="Goal Details"><div>Goal Details</div></Modal>; }

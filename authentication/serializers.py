@@ -27,7 +27,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         write_only=True,
         style={'input_type': 'password'}
     )
-    department_id = serializers.IntegerField(write_only=True)
+    department_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
     
     class Meta:
         model = User
@@ -40,7 +40,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'email': {'required': True},
             'first_name': {'required': True},
             'last_name': {'required': True},
-            'username': {'required': True},
+            'username': {'required': False},
         }
     
     def validate_email(self, value):
@@ -64,6 +64,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     def validate_department_id(self, value):
         """Validate department exists and is active."""
+        if value is None:
+            return value
         try:
             department = Department.objects.get(id=value, is_active=True)
             return value
@@ -95,11 +97,26 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         """Create user with validated data."""
         # Remove password_confirm and department_id from validated_data
         validated_data.pop('password_confirm')
-        department_id = validated_data.pop('department_id')
+        department_id = validated_data.pop('department_id', None)
         
-        # Get department
-        department = Department.objects.get(id=department_id)
-        validated_data['department'] = department
+        # Auto-generate username from email if not provided
+        if 'username' not in validated_data or not validated_data['username']:
+            email = validated_data['email']
+            base_username = email.split('@')[0]
+            username = base_username
+            counter = 1
+            
+            # Ensure username is unique
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            validated_data['username'] = username
+        
+        # Get department if provided
+        if department_id:
+            department = Department.objects.get(id=department_id)
+            validated_data['department'] = department
         
         # Create user
         password = validated_data.pop('password')

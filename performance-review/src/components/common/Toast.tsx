@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Toast as ToastType, useToast } from '../../contexts/ToastContext';
 
 // Icons (using simple SVG icons since we can't import Heroicons yet)

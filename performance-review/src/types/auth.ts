@@ -15,6 +15,22 @@ export interface User {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Manager information (populated when needed)
+  manager?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone?: string;
+    role_title?: string;
+    department?: string;
+  };
+  // Department information (populated when needed)
+  department?: {
+    id: string;
+    name: string;
+    description?: string;
+  };
 }
 
 export interface Department {

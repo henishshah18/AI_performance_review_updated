@@ -53,12 +53,10 @@ class SignupView(generics.CreateAPIView):
             log_login(user, request, success=True)
             
             return Response({
-                'message': 'User registered successfully',
+                'access': str(access_token),
+                'refresh': str(refresh),
                 'user': UserProfileSerializer(user).data,
-                'tokens': {
-                    'access': str(access_token),
-                    'refresh': str(refresh),
-                }
+                'message': 'User registered successfully'
             }, status=status.HTTP_201_CREATED)
             
         except ValidationError as e:

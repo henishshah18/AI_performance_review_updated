@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { User, UserRole, LoginRequest, SignupRequest, AuthError } from '../types/auth';
+import { User, UserRole, LoginRequest, SignupRequest } from '../types/auth';
 import authService from '../services/authService';
 
 // Auth state interface
@@ -112,7 +112,7 @@ interface AuthContextType {
   needsTeamAssignment: boolean;
 
   // Actions
-  login: (credentials: LoginRequest) => Promise<void>;
+  login: (credentials: LoginRequest) => Promise<User>;
   signup: (userData: SignupRequest) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -186,6 +186,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (response.success) {
         dispatch({ type: 'AUTH_SUCCESS', payload: response.data.user });
+        return response.data.user;
       } else {
         throw new Error(response.message || 'Login failed');
       }
