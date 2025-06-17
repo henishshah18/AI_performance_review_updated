@@ -10,7 +10,10 @@ import {
   ChartBarIcon,
   ClockIcon,
   CheckCircleIcon,
+  DocumentTextIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
+import { ReviewManagement } from '../../components/reviews/ReviewManagement';
 
 // Mock data types - will be replaced with real API types in later phases
 interface AssignedObjective {
@@ -52,6 +55,7 @@ export function ManagerDashboard() {
   const [teamOverview, setTeamOverview] = useState<TeamOverview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasTeam, setHasTeam] = useState(true);
+  const [activeTab, setActiveTab] = useState<'objectives' | 'reviews'>('objectives');
 
   // Mock data loading - will be replaced with real API calls
   useEffect(() => {
@@ -203,6 +207,7 @@ export function ManagerDashboard() {
   const getProgressColor = (progress: number) => {
     if (progress >= 80) return 'bg-green-500';
     if (progress >= 60) return 'bg-yellow-500';
+    if (progress >= 40) return 'bg-orange-500';
     return 'bg-red-500';
   };
 
@@ -210,378 +215,357 @@ export function ManagerDashboard() {
     return <DashboardSkeleton />;
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="md:flex md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Manager Dashboard
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Welcome back, {user?.first_name}! Here's your team's performance overview.
-          </p>
-        </div>
-        <div className="mt-4 flex md:mt-0 md:ml-4 space-x-3">
-          <Link
-            to="/team-goals"
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Assign Goals
-          </Link>
-          <Link
-            to="/reports"
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            <ChartBarIcon className="h-4 w-4 mr-2" />
-            View Reports
-          </Link>
-        </div>
-      </div>
+  if (!hasTeam) {
+    return <NoTeamState />;
+  }
 
-      {/* My Assigned Objectives */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">My Assigned Objectives</h3>
-          <Link
-            to="/objectives"
-            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-          >
-            View all objectives →
-          </Link>
-        </div>
-        
-        {objectives.length === 0 ? (
-          <div className="bg-white shadow rounded-lg p-6 text-center">
-            <TargetIcon className="mx-auto h-12 w-12 text-gray-300" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No objectives assigned</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Contact HR to get your objectives assigned.
-            </p>
+  const renderTabContent = () => {
+    if (activeTab === 'reviews') {
+      return <ReviewManagement className="mt-6" />;
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* Team Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <UsersIcon className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Team Members</p>
+                <p className="text-2xl font-bold text-gray-900">{teamOverview?.totalMembers}</p>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {objectives.map((objective) => (
-              <div key={objective.id} className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="p-5">
-                  <div className="flex items-center justify-between">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(objective.status)}`}>
-                      {objective.status}
-                    </span>
-                    <Link
-                      to={`/objectives/${objective.id}`}
-                      className="text-gray-400 hover:text-gray-500"
-                    >
-                      <EyeIcon className="h-5 w-5" />
-                    </Link>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <h4 className="text-lg font-medium text-gray-900">{objective.title}</h4>
-                    <p className="mt-2 text-sm text-gray-500 line-clamp-2">
-                      {objective.description}
-                    </p>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-500">Progress</span>
-                      <span className="font-medium text-gray-900">{objective.progress}%</span>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <TargetIcon className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Active Goals</p>
+                <p className="text-2xl font-bold text-gray-900">{teamOverview?.activeGoals}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircleIcon className="h-8 w-8 text-emerald-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Completed</p>
+                <p className="text-2xl font-bold text-gray-900">{teamOverview?.completedGoals}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <ExclamationTriangleIcon className="h-8 w-8 text-red-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Overdue</p>
+                <p className="text-2xl font-bold text-gray-900">{teamOverview?.overdueGoals}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* My Objectives */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">My Objectives</h2>
+              <Link
+                to="/objectives"
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                View All
+              </Link>
+            </div>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4">
+              {objectives.slice(0, 3).map((objective) => (
+                <div key={objective.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-gray-900">{objective.title}</h3>
+                      <p className="text-sm text-gray-600 mt-1">{objective.description}</p>
+                      <div className="flex items-center mt-3 space-x-4">
+                        <div className="flex items-center text-sm text-gray-500">
+                          <TargetIcon className="h-4 w-4 mr-1" />
+                          {objective.completedGoals}/{objective.totalGoals} goals
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <ClockIcon className="h-4 w-4 mr-1" />
+                          Due {new Date(objective.dueDate).toLocaleDateString()}
+                        </div>
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="flex items-center space-x-2 ml-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(objective.status)}`}>
+                        {objective.status}
+                      </span>
+                      <button className="text-gray-400 hover:text-gray-600">
+                        <EyeIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Progress</span>
+                      <span className="font-medium">{objective.progress}%</span>
+                    </div>
+                    <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full ${getProgressColor(objective.progress)}`}
                         style={{ width: `${objective.progress}%` }}
                       />
                     </div>
                   </div>
-                  
-                  <div className="mt-4 flex justify-between text-sm text-gray-500">
-                    <span>Goals: {objective.completedGoals}/{objective.totalGoals}</span>
-                    <span>Due: {new Date(objective.dueDate).toLocaleDateString()}</span>
-                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Team Performance Overview */}
-      {hasTeam && teamOverview ? (
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Team Performance Overview</h3>
-          
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <UsersIcon className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Team Members
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {teamOverview.totalMembers}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <TargetIcon className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Active Goals
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {teamOverview.activeGoals}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <CheckCircleIcon className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Completed Goals
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {teamOverview.completedGoals}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <ExclamationTriangleIcon className={`h-6 w-6 ${teamOverview.overdueGoals > 0 ? 'text-red-500' : 'text-gray-400'}`} />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Overdue Goals
-                      </dt>
-                      <dd className={`text-lg font-medium ${teamOverview.overdueGoals > 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                        {teamOverview.overdueGoals}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
+        {/* Team Members */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Team Members</h2>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">
+                  Avg. Progress: {teamOverview?.averageProgress}%
+                </span>
+                <Link
+                  to="/team"
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  View All
+                </Link>
               </div>
             </div>
           </div>
-
-          {teamOverview.overdueGoals > 0 && (
-            <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    Attention Required
-                  </h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    <p>
-                      Your team has {teamOverview.overdueGoals} overdue goal{teamOverview.overdueGoals > 1 ? 's' : ''}. 
-                      Please review and take action to get back on track.
-                    </p>
+          <div className="p-6">
+            <div className="space-y-4">
+              {teamMembers.map((member) => (
+                <div key={member.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                          <span className="text-sm font-medium text-gray-700">
+                            {member.firstName[0]}{member.lastName[0]}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {member.firstName} {member.lastName}
+                        </p>
+                        <p className="text-sm text-gray-600">{member.roleTitle}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-6">
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-gray-900">{member.activeGoals}</p>
+                        <p className="text-xs text-gray-500">Active</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-gray-900">{member.completedGoals}</p>
+                        <p className="text-xs text-gray-500">Completed</p>
+                      </div>
+                      {member.overdue > 0 && (
+                        <div className="text-center">
+                          <p className="text-sm font-medium text-red-600">{member.overdue}</p>
+                          <p className="text-xs text-red-500">Overdue</p>
+                        </div>
+                      )}
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">
+                          Last active {formatTimestamp(member.lastActivity)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   <div className="mt-4">
-                    <Link
-                      to="/team-goals?filter=overdue"
-                      className="text-sm font-medium text-red-800 hover:text-red-700"
-                    >
-                      View overdue goals →
-                    </Link>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Overall Progress</span>
+                      <span className="font-medium">{member.progressPercentage}%</span>
+                    </div>
+                    <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full ${getProgressColor(member.progressPercentage)}`}
+                        style={{ width: `${member.progressPercentage}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
-          )}
-        </div>
-      ) : (
-        <NoTeamState />
-      )}
-
-      {/* Team Member Cards */}
-      {hasTeam && teamMembers.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Team Members</h3>
-            <Link
-              to="/team-goals"
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-            >
-              Manage team goals →
-            </Link>
           </div>
-          
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {teamMembers.map((member) => (
-              <div key={member.id} className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-700">
-                        {member.firstName.charAt(0)}{member.lastName.charAt(0)}
-                      </span>
-                    </div>
-                    <div className="ml-4">
-                      <h4 className="text-lg font-medium text-gray-900">
-                        {member.firstName} {member.lastName}
-                      </h4>
-                      <p className="text-sm text-gray-500">{member.roleTitle}</p>
-                    </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link
+              to="/objectives/create"
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <PlusIcon className="h-8 w-8 text-blue-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Create Objective</p>
+                <p className="text-xs text-gray-600">Set new team goals</p>
+              </div>
+            </Link>
+            <Link
+              to="/team/performance"
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <ChartBarIcon className="h-8 w-8 text-green-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">View Analytics</p>
+                <p className="text-xs text-gray-600">Team performance insights</p>
+              </div>
+            </Link>
+            <button
+              onClick={() => setActiveTab('reviews')}
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <DocumentTextIcon className="h-8 w-8 text-purple-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Manage Reviews</p>
+                <p className="text-xs text-gray-600">Performance reviews</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Manager Dashboard
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Welcome back, {user?.first_name}! Here's your team overview.
+          </p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('objectives')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'objectives'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center">
+                  <TargetIcon className="h-5 w-5 mr-2" />
+                  Objectives & Team
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('reviews')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'reviews'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center">
+                  <DocumentTextIcon className="h-5 w-5 mr-2" />
+                  Performance Reviews
+                </div>
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {renderTabContent()}
+      </div>
+    </div>
+  );
+}
+
+function NoTeamState() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <UsersIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">No Team Assigned</h2>
+        <p className="text-gray-600 mb-6 max-w-md">
+          You don't have any team members assigned to you yet. 
+          Please contact your HR team to get team members assigned to your account.
+        </p>
+        <Link
+          to="/help"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+        >
+          Contact Support
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="animate-pulse">
+          {/* Header Skeleton */}
+          <div className="mb-8">
+            <div className="h-8 bg-gray-300 rounded w-64 mb-2"></div>
+            <div className="h-4 bg-gray-300 rounded w-96"></div>
+          </div>
+
+          {/* Cards Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="h-8 w-8 bg-gray-300 rounded"></div>
                   </div>
-                  
-                  <div className="mt-4 space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Active Goals</span>
-                      <span className="font-medium text-gray-900">{member.activeGoals}</span>
-                    </div>
-                    
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Completed</span>
-                      <span className="font-medium text-gray-900">{member.completedGoals}</span>
-                    </div>
-                    
-                    {member.overdue > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-red-500">Overdue</span>
-                        <span className="font-medium text-red-600">{member.overdue}</span>
-                      </div>
-                    )}
-                    
-                    <div className="mt-4">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-500">Progress</span>
-                        <span className="font-medium text-gray-900">{member.progressPercentage}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${getProgressColor(member.progressPercentage)}`}
-                          style={{ width: `${member.progressPercentage}%` }}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between text-xs text-gray-400">
-                      <span>Last active: {formatTimestamp(member.lastActivity)}</span>
-                      <Link
-                        to={`/team-goals?assignee=${member.id}`}
-                        className="text-primary-600 hover:text-primary-700 font-medium"
-                      >
-                        View Details
-                      </Link>
-                    </div>
+                  <div className="ml-4 flex-1">
+                    <div className="h-4 bg-gray-300 rounded w-20 mb-2"></div>
+                    <div className="h-6 bg-gray-300 rounded w-12"></div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
-// No Team State Component
-function NoTeamState() {
-  return (
-    <div className="bg-white shadow rounded-lg p-6 text-center">
-      <UsersIcon className="mx-auto h-12 w-12 text-gray-300" />
-      <h3 className="mt-2 text-sm font-medium text-gray-900">No team members assigned</h3>
-      <p className="mt-1 text-sm text-gray-500">
-        You haven't been assigned any team members yet. Contact HR or add team members to get started.
-      </p>
-      <div className="mt-6">
-        <button
-          type="button"
-          className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-        >
-          <PlusIcon className="h-4 w-4 mr-2" />
-          Add Team Members
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Loading skeleton component
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-6 animate-pulse">
-      {/* Header skeleton */}
-      <div className="md:flex md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-        </div>
-        <div className="mt-4 flex md:mt-0 md:ml-4 space-x-3">
-          <div className="h-10 bg-gray-200 rounded w-32"></div>
-          <div className="h-10 bg-gray-200 rounded w-32"></div>
-        </div>
-      </div>
-
-      {/* Objectives skeleton */}
-      <div>
-        <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white overflow-hidden shadow rounded-lg p-5">
-              <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-              <div className="h-2 bg-gray-200 rounded w-full mb-4"></div>
-              <div className="flex justify-between">
-                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-              </div>
+          {/* Content Skeleton */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="h-6 bg-gray-300 rounded w-48 mb-4"></div>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-20 bg-gray-300 rounded"></div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Team overview skeleton */}
-      <div>
-        <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white overflow-hidden shadow rounded-lg p-5">
-              <div className="flex items-center">
-                <div className="h-6 w-6 bg-gray-200 rounded"></div>
-                <div className="ml-5 w-0 flex-1">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </div>
-            </div>
-          ))}
+          </div>
         </div>
       </div>
     </div>

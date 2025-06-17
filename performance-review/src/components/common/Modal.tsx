@@ -121,53 +121,57 @@ const Modal: React.FC<ModalProps> = ({
     >
       {/* Backdrop */}
       <div
-        className="modal-overlay animate-fade-in"
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
         onClick={handleBackdropClick}
-      >
-        {/* Modal container */}
-        <div className="flex min-h-full items-center justify-center p-4">
-          <div
-            ref={modalRef}
-            className={`
-              modal-content animate-bounce-in
-              ${sizeClasses[size]}
-              ${className}
-            `}
-            tabIndex={-1}
-            onKeyDown={handleKeyDown}
-          >
-            {/* Header */}
-            {(title || showCloseButton) && (
-              <div className="card-header flex items-center justify-between">
-                {title && (
-                  <h3 id="modal-title" className="text-lg font-semibold text-gray-900">
-                    {title}
-                  </h3>
-                )}
-                
-                {showCloseButton && (
-                  <button
-                    type="button"
-                    className="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md p-1"
-                    onClick={onClose}
-                    aria-label="Close modal"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Content */}
-            <div className="card-body">
-              {children}
+      />
+      
+      {/* Modal container with proper scrolling */}
+      <div className="relative min-h-full flex items-start justify-center p-4 py-8">
+        <div
+          ref={modalRef}
+          className={`
+            relative bg-white rounded-xl shadow-xl w-full
+            ${sizeClasses[size]}
+            ${className}
+            max-h-[calc(100vh-4rem)]
+            flex flex-col
+            transform transition-all
+            animate-bounce-in
+          `}
+          tabIndex={-1}
+          onKeyDown={handleKeyDown}
+        >
+          {/* Header */}
+          {(title || showCloseButton) && (
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
+              {title && (
+                <h3 id="modal-title" className="text-lg font-semibold text-gray-900">
+                  {title}
+                </h3>
+              )}
+              
+              {showCloseButton && (
+                <button
+                  type="button"
+                  className="text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md p-1"
+                  onClick={onClose}
+                  aria-label="Close modal"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
+          )}
+
+          {/* Content with scrolling */}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {children}
           </div>
         </div>
       </div>

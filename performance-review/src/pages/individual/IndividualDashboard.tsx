@@ -618,53 +618,35 @@ export function IndividualDashboard() {
 
       {/* Manager Information & Recent Feedback */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Manager Information */}
-        {user?.manager && (
+        {/* Manager Information - Temporarily disabled due to data structure issues */}
+        {/* {user?.manager && (
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Manager Information</h3>
-              
-              <div className="flex items-center mb-4">
-                <div className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-lg font-medium text-gray-700">
-                    {user.manager.first_name.charAt(0) + user.manager.last_name.charAt(0)}
-                  </span>
-                </div>
-                <div className="ml-4">
-                  <h4 className="text-lg font-medium text-gray-900">
-                    {user.manager.first_name} {user.manager.last_name}
-                  </h4>
-                  <p className="text-sm text-gray-500">{user.manager.role_title}</p>
-                  <p className="text-sm text-gray-500">{user.manager.department} Department</p>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center text-sm text-gray-600">
-                  <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-400" />
-                  <a href={`mailto:${user.manager.email}`} className="hover:text-primary-600">
-                    {user.manager.email}
-                  </a>
-                </div>
-                
-                {user.manager.phone && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" />
-                    <a href={`tel:${user.manager.phone}`} className="hover:text-primary-600">
-                      {user.manager.phone}
-                    </a>
+              ... manager content ...
+            </div>
+          </div>
+        )} */}
+
+        {/* No Manager Assigned Warning */}
+        {!user?.manager_id && (
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Manager Information</h3>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <div className="flex">
+                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800">
+                      No Manager Assigned
+                    </h3>
+                    <div className="mt-2 text-sm text-yellow-700">
+                      <p>
+                        You don't have a manager assigned yet. Please contact HR to get this set up.
+                      </p>
+                    </div>
                   </div>
-                )}
-              </div>
-              
-              <div className="mt-6">
-                <a
-                  href={`mailto:${user.manager.email}?subject=Check-in Request`}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                >
-                  <EnvelopeIcon className="h-4 w-4 mr-2" />
-                  Contact Manager
-                </a>
+                </div>
               </div>
             </div>
           </div>

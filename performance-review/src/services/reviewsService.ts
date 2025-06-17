@@ -4,7 +4,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('reviewai_access_token');
   return {
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` })
@@ -101,6 +101,16 @@ export const reviewsService = {
       const errorData = await response.json().catch(() => ({ error: 'Network error' }));
       throw new Error(errorData.error || errorData.detail || `HTTP ${response.status}`);
     }
+  },
+
+  // Start review cycle (transition from draft to active)
+  startReviewCycle: async (id: string, data: { department_ids: string[]; settings: any }): Promise<any> => {
+    const response = await fetch(`${API_BASE_URL}/reviews/cycles/${id}/start/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
   },
 
   // Get cycle participants

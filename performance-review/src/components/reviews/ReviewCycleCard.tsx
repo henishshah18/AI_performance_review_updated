@@ -27,7 +27,7 @@ interface ReviewCycleCardProps {
 }
 
 interface CycleAction {
-  type: 'view' | 'edit' | 'end' | 'delete' | 'extend' | 'send_reminders';
+  type: 'view' | 'edit' | 'start' | 'end' | 'delete' | 'extend' | 'send_reminders';
   label: string;
   icon: any;
   variant: 'primary' | 'outline' | 'danger';
@@ -159,6 +159,37 @@ export const ReviewCycleCard: React.FC<ReviewCycleCardProps> = ({
     }
   };
 
+  const handleStartCycle = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // For now, use default settings and all departments
+      // In a real implementation, this would open a modal to select departments and settings
+      const defaultSettings = {
+        auto_assign_peer_reviews: true,
+        peer_review_anonymous: true,
+        exclude_probationary: true,
+        exclude_contractors: false
+      };
+      
+      // Get all department IDs - this is a simplified approach
+      // In production, you'd want to let the user select departments
+      const departmentIds = ['1', '2', '3']; // This should come from a department selection modal
+      
+      await reviewsService.startReviewCycle(cycle.id, {
+        department_ids: departmentIds,
+        settings: defaultSettings
+      });
+      
+      onUpdate?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start cycle');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getActions = (): CycleAction[] => {
     const actions: CycleAction[] = [
       {
@@ -172,13 +203,22 @@ export const ReviewCycleCard: React.FC<ReviewCycleCardProps> = ({
 
     if (showManagementActions) {
       if (cycle.status === 'draft') {
-        actions.push({
-          type: 'edit',
-          label: 'Edit',
-          icon: PencilIcon,
-          variant: 'outline',
-          action: () => window.location.href = `/reviews/cycles/${cycle.id}/edit`
-        });
+        actions.push(
+          {
+            type: 'start',
+            label: 'Start Cycle',
+            icon: PlayIcon,
+            variant: 'primary',
+            action: handleStartCycle
+          },
+          {
+            type: 'edit',
+            label: 'Edit',
+            icon: PencilIcon,
+            variant: 'outline',
+            action: () => window.location.href = `/reviews/cycles/${cycle.id}/edit`
+          }
+        );
       }
 
       if (cycle.status === 'active') {

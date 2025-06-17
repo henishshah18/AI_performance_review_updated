@@ -12,7 +12,9 @@ import {
   CheckCircleIcon,
   PencilIcon,
   TrashIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
+import { ReviewManagement } from '../../components/reviews/ReviewManagement';
 
 // Mock data types - will be replaced with real API types in later phases
 interface AssignedObjective {
@@ -80,6 +82,7 @@ export function ManagerDashboard() {
   const [teamOverview, setTeamOverview] = useState<TeamOverview | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'objectives' | 'reviews'>('objectives');
   
   // Modal states
   const [showCreateGoalModal, setShowCreateGoalModal] = useState(false);
@@ -202,39 +205,39 @@ export function ManagerDashboard() {
         },
       ]);
 
-      // Mock goals
+      // Mock goals data
       setGoals([
         {
           id: '1',
-          title: 'Implement React Best Practices',
-          description: 'Refactor existing components to follow React best practices and improve performance',
+          title: 'Implement User Authentication',
+          description: 'Build secure login and registration system',
           objectiveId: '1',
           objectiveTitle: 'Improve Team Productivity',
           assignedTo: '1',
           assignedToName: 'Alice Johnson',
           priority: 'high',
-          dueDate: '2024-11-30',
+          dueDate: '2024-11-15',
           status: 'in_progress',
           progress: 75,
           totalTasks: 8,
           completedTasks: 6,
-          createdAt: new Date().toISOString(),
+          createdAt: '2024-10-01',
         },
         {
           id: '2',
-          title: 'Setup Automated Testing',
-          description: 'Implement comprehensive automated testing suite for all components',
+          title: 'Setup CI/CD Pipeline',
+          description: 'Automated testing and deployment pipeline',
           objectiveId: '2',
           objectiveTitle: 'Enhance Code Quality',
-          assignedTo: '2',
-          assignedToName: 'Bob Smith',
-          priority: 'medium',
-          dueDate: '2024-12-15',
-          status: 'not_started',
-          progress: 0,
+          assignedTo: '4',
+          assignedToName: 'David Wilson',
+          priority: 'high',
+          dueDate: '2024-10-30',
+          status: 'completed',
+          progress: 100,
           totalTasks: 5,
-          completedTasks: 0,
-          createdAt: new Date().toISOString(),
+          completedTasks: 5,
+          createdAt: '2024-09-15',
         },
       ]);
 
@@ -244,7 +247,6 @@ export function ManagerDashboard() {
     loadDashboardData();
   }, []);
 
-  // Goal management functions
   const createGoal = (goalData: CreateGoalData) => {
     const newGoal: Goal = {
       id: Date.now().toString(),
@@ -253,7 +255,8 @@ export function ManagerDashboard() {
       objectiveId: goalData.objectiveId,
       objectiveTitle: objectives.find(obj => obj.id === goalData.objectiveId)?.title || '',
       assignedTo: goalData.assignedTo,
-      assignedToName: teamMembers.find(member => member.id === goalData.assignedTo)?.firstName + ' ' + teamMembers.find(member => member.id === goalData.assignedTo)?.lastName || '',
+      assignedToName: teamMembers.find(member => member.id === goalData.assignedTo)?.firstName + ' ' + 
+                     teamMembers.find(member => member.id === goalData.assignedTo)?.lastName || '',
       priority: goalData.priority,
       dueDate: goalData.dueDate,
       status: 'not_started',
@@ -264,68 +267,32 @@ export function ManagerDashboard() {
     };
 
     setGoals(prev => [...prev, newGoal]);
-    
-    // Update team member's active goals count
-    setTeamMembers(prev => prev.map(member => 
-      member.id === goalData.assignedTo 
-        ? { ...member, activeGoals: member.activeGoals + 1 }
-        : member
-    ));
-
-    // Update objective's total goals count
-    setObjectives(prev => prev.map(objective =>
-      objective.id === goalData.objectiveId
-        ? { ...objective, totalGoals: objective.totalGoals + 1 }
-        : objective
-    ));
-
     setShowCreateGoalModal(false);
   };
 
   const editGoal = (goalData: CreateGoalData) => {
     if (!selectedGoal) return;
 
-    setGoals(prev => prev.map(goal =>
-      goal.id === selectedGoal.id
-        ? {
-            ...goal,
-            title: goalData.title,
-            description: goalData.description,
-            objectiveId: goalData.objectiveId,
-            objectiveTitle: objectives.find(obj => obj.id === goalData.objectiveId)?.title || '',
-            assignedTo: goalData.assignedTo,
-            assignedToName: teamMembers.find(member => member.id === goalData.assignedTo)?.firstName + ' ' + teamMembers.find(member => member.id === goalData.assignedTo)?.lastName || '',
-            priority: goalData.priority,
-            dueDate: goalData.dueDate,
-          }
-        : goal
-    ));
+    const updatedGoal: Goal = {
+      ...selectedGoal,
+      title: goalData.title,
+      description: goalData.description,
+      objectiveId: goalData.objectiveId,
+      objectiveTitle: objectives.find(obj => obj.id === goalData.objectiveId)?.title || '',
+      assignedTo: goalData.assignedTo,
+      assignedToName: teamMembers.find(member => member.id === goalData.assignedTo)?.firstName + ' ' + 
+                     teamMembers.find(member => member.id === goalData.assignedTo)?.lastName || '',
+      priority: goalData.priority,
+      dueDate: goalData.dueDate,
+    };
 
+    setGoals(prev => prev.map(goal => goal.id === selectedGoal.id ? updatedGoal : goal));
     setShowEditGoalModal(false);
     setSelectedGoal(null);
   };
 
   const deleteGoal = (goalId: string) => {
-    if (window.confirm('Are you sure you want to delete this goal? This action cannot be undone.')) {
-      const goal = goals.find(g => g.id === goalId);
-      if (goal) {
-        setGoals(prev => prev.filter(g => g.id !== goalId));
-        
-        // Update team member's active goals count
-        setTeamMembers(prev => prev.map(member => 
-          member.id === goal.assignedTo 
-            ? { ...member, activeGoals: member.activeGoals - 1 }
-            : member
-        ));
-
-        // Update objective's total goals count
-        setObjectives(prev => prev.map(objective =>
-          objective.id === goal.objectiveId
-            ? { ...objective, totalGoals: objective.totalGoals - 1 }
-            : objective
-        ));
-      }
-    }
+    setGoals(prev => prev.filter(goal => goal.id !== goalId));
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -357,113 +324,19 @@ export function ManagerDashboard() {
   const getProgressColor = (progress: number) => {
     if (progress >= 80) return 'bg-green-500';
     if (progress >= 60) return 'bg-yellow-500';
+    if (progress >= 40) return 'bg-orange-500';
     return 'bg-red-500';
   };
 
-  if (isLoading) {
-    return <DashboardSkeleton />;
-  }
+  const renderTabContent = () => {
+    if (activeTab === 'reviews') {
+      return <ReviewManagement className="mt-6" />;
+    }
 
-  return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="md:flex md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Manager Dashboard
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Welcome back, {user?.first_name}! Here's your team's performance overview.
-          </p>
-        </div>
-        <div className="mt-4 flex md:mt-0 md:ml-4 space-x-3">
-          <button
-            onClick={() => setShowCreateGoalModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Assign Goals
-          </button>
-          <Link
-            to="/reports"
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            <ChartBarIcon className="h-4 w-4 mr-2" />
-            View Reports
-          </Link>
-        </div>
-      </div>
-
-      {/* My Assigned Objectives */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">My Assigned Objectives</h3>
-          <Link
-            to="/objectives"
-            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-          >
-            View all objectives →
-          </Link>
-        </div>
-        
-        {objectives.length === 0 ? (
-          <div className="bg-white shadow rounded-lg p-6 text-center">
-            <FlagIcon className="mx-auto h-12 w-12 text-gray-300" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No objectives assigned</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Contact HR to get your objectives assigned.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {objectives.map((objective) => (
-              <div key={objective.id} className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="p-5">
-                  <div className="flex items-center justify-between">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(objective.status)}`}>
-                      {objective.status}
-                    </span>
-                    <Link
-                      to={`/objectives/${objective.id}`}
-                      className="text-gray-400 hover:text-gray-500"
-                    >
-                      <EyeIcon className="h-5 w-5" />
-                    </Link>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <h4 className="text-lg font-medium text-gray-900">{objective.title}</h4>
-                    <p className="mt-2 text-sm text-gray-500 line-clamp-2">
-                      {objective.description}
-                    </p>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-500">Progress</span>
-                      <span className="font-medium text-gray-900">{objective.progress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${getProgressColor(objective.progress)}`}
-                        style={{ width: `${objective.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 flex justify-between text-sm text-gray-500">
-                    <span>Goals: {objective.completedGoals}/{objective.totalGoals}</span>
-                    <span>Due: {new Date(objective.dueDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Team Performance Overview */}
-      {teamOverview ? (
+    // Objectives tab content (existing dashboard content)
+    return (
+      <div className="space-y-6">
+        {/* Team Performance Overview */}
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-4">Team Performance Overview</h3>
           
@@ -480,7 +353,7 @@ export function ManagerDashboard() {
                         Team Members
                       </dt>
                       <dd className="text-lg font-medium text-gray-900">
-                        {teamOverview.totalMembers}
+                        {teamOverview?.totalMembers}
                       </dd>
                     </dl>
                   </div>
@@ -500,7 +373,7 @@ export function ManagerDashboard() {
                         Active Goals
                       </dt>
                       <dd className="text-lg font-medium text-gray-900">
-                        {teamOverview.activeGoals}
+                        {teamOverview?.activeGoals}
                       </dd>
                     </dl>
                   </div>
@@ -520,7 +393,7 @@ export function ManagerDashboard() {
                         Completed Goals
                       </dt>
                       <dd className="text-lg font-medium text-gray-900">
-                        {teamOverview.completedGoals}
+                        {teamOverview?.completedGoals}
                       </dd>
                     </dl>
                   </div>
@@ -532,15 +405,15 @@ export function ManagerDashboard() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <ExclamationTriangleIcon className={`h-6 w-6 ${teamOverview.overdueGoals > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+                    <ExclamationTriangleIcon className={`h-6 w-6 ${teamOverview && teamOverview.overdueGoals > 0 ? 'text-red-500' : 'text-gray-400'}`} />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">
                         Overdue Goals
                       </dt>
-                      <dd className={`text-lg font-medium ${teamOverview.overdueGoals > 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                        {teamOverview.overdueGoals}
+                      <dd className={`text-lg font-medium ${teamOverview && teamOverview.overdueGoals > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                        {teamOverview?.overdueGoals}
                       </dd>
                     </dl>
                   </div>
@@ -549,7 +422,7 @@ export function ManagerDashboard() {
             </div>
           </div>
 
-          {teamOverview.overdueGoals > 0 && (
+          {teamOverview && teamOverview.overdueGoals > 0 && (
             <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -578,242 +451,278 @@ export function ManagerDashboard() {
             </div>
           )}
         </div>
-      ) : (
-        <NoTeamState />
-      )}
 
-      {/* Team Member Cards */}
-      {teamMembers.length > 0 && (
+        {/* My Assigned Objectives */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Team Members</h3>
+            <h3 className="text-lg font-medium text-gray-900">My Assigned Objectives</h3>
             <Link
-              to="/team-goals"
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              to="/objectives"
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
-              Manage team goals →
+              View all objectives →
             </Link>
           </div>
           
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {teamMembers.map((member) => (
-              <div key={member.id} className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-700">
-                        {member.firstName.charAt(0)}{member.lastName.charAt(0)}
+          {objectives.length === 0 ? (
+            <div className="bg-white shadow rounded-lg p-6 text-center">
+              <FlagIcon className="mx-auto h-12 w-12 text-gray-300" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No objectives assigned</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Contact HR to get your objectives assigned.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {objectives.map((objective) => (
+                <div key={objective.id} className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center justify-between">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(objective.status)}`}>
+                        {objective.status}
                       </span>
-                    </div>
-                    <div className="ml-4">
-                      <h4 className="text-lg font-medium text-gray-900">
-                        {member.firstName} {member.lastName}
-                      </h4>
-                      <p className="text-sm text-gray-500">{member.roleTitle}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Active Goals</span>
-                      <span className="font-medium text-gray-900">{member.activeGoals}</span>
+                      <Link
+                        to={`/objectives/${objective.id}`}
+                        className="text-gray-400 hover:text-gray-500"
+                      >
+                        <EyeIcon className="h-5 w-5" />
+                      </Link>
                     </div>
                     
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Completed</span>
-                      <span className="font-medium text-gray-900">{member.completedGoals}</span>
+                    <div className="mt-4">
+                      <h4 className="text-lg font-medium text-gray-900">{objective.title}</h4>
+                      <p className="mt-2 text-sm text-gray-500 line-clamp-2">
+                        {objective.description}
+                      </p>
                     </div>
-                    
-                    {member.overdue > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-red-500">Overdue</span>
-                        <span className="font-medium text-red-600">{member.overdue}</span>
-                      </div>
-                    )}
                     
                     <div className="mt-4">
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-gray-500">Progress</span>
-                        <span className="font-medium text-gray-900">{member.progressPercentage}%</span>
+                        <span className="font-medium text-gray-900">{objective.progress}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
-                          className={`h-2 rounded-full ${getProgressColor(member.progressPercentage)}`}
-                          style={{ width: `${member.progressPercentage}%` }}
+                          className={`h-2 rounded-full ${getProgressColor(objective.progress)}`}
+                          style={{ width: `${objective.progress}%` }}
                         />
                       </div>
                     </div>
                     
-                    <div className="flex justify-between text-xs text-gray-400">
-                      <span>Last active: {formatTimestamp(member.lastActivity)}</span>
-                      <Link
-                        to={`/team-goals?assignee=${member.id}`}
-                        className="text-primary-600 hover:text-primary-700 font-medium"
-                      >
-                        View Details
-                      </Link>
+                    <div className="mt-4 flex justify-between text-sm text-gray-500">
+                      <span>Goals: {objective.completedGoals}/{objective.totalGoals}</span>
+                      <span>Due: {new Date(objective.dueDate).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Team Goals Management */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Team Goals</h3>
-          <button
-            onClick={() => setShowCreateGoalModal(true)}
-            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-          >
-            Create new goal →
-          </button>
-        </div>
-        
-        {goals.length === 0 ? (
-          <div className="bg-white shadow rounded-lg p-6 text-center">
-            <FlagIcon className="mx-auto h-12 w-12 text-gray-300" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No goals created</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Start by creating goals for your team members based on assigned objectives.
-            </p>
-            <button
-              onClick={() => setShowCreateGoalModal(true)}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Create First Goal
-            </button>
-          </div>
-        ) : (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {goals.map((goal) => (
-                <li key={goal.id}>
-                  <div className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-3">
-                          <h4 className="text-lg font-medium text-gray-900 truncate">
-                            {goal.title}
-                          </h4>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            goal.priority === 'high' 
-                              ? 'bg-red-100 text-red-800' 
-                              : goal.priority === 'medium' 
-                              ? 'bg-yellow-100 text-yellow-800' 
-                              : 'bg-green-100 text-green-800'
-                          }`}>
-                            {goal.priority}
-                          </span>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            goal.status === 'completed' 
-                              ? 'bg-green-100 text-green-800'
-                              : goal.status === 'in_progress' 
-                              ? 'bg-blue-100 text-blue-800'
-                              : goal.status === 'overdue'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {goal.status.replace('_', ' ')}
-                          </span>
+        {/* Team Member Cards */}
+        {teamMembers.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Team Members</h3>
+              <Link
+                to="/team-goals"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Manage team goals →
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {teamMembers.map((member) => (
+                <div key={member.id} className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                        <span className="text-sm font-medium text-gray-700">
+                          {member.firstName.charAt(0)}{member.lastName.charAt(0)}
+                        </span>
+                      </div>
+                      <div className="ml-4">
+                        <h4 className="text-lg font-medium text-gray-900">
+                          {member.firstName} {member.lastName}
+                        </h4>
+                        <p className="text-sm text-gray-500">{member.roleTitle}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Active Goals</span>
+                        <span className="font-medium text-gray-900">{member.activeGoals}</span>
+                      </div>
+                      
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Completed</span>
+                        <span className="font-medium text-gray-900">{member.completedGoals}</span>
+                      </div>
+                      
+                      {member.overdue > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-red-500">Overdue</span>
+                          <span className="font-medium text-red-600">{member.overdue}</span>
                         </div>
-                        <div className="mt-1">
-                          <p className="text-sm text-gray-600 line-clamp-2">
-                            {goal.description}
-                          </p>
+                      )}
+                      
+                      <div className="mt-4">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-500">Progress</span>
+                          <span className="font-medium text-gray-900">{member.progressPercentage}%</span>
                         </div>
-                        <div className="mt-2 flex items-center text-sm text-gray-500 space-x-4">
-                          <span>Objective: {goal.objectiveTitle}</span>
-                          <span>Assigned to: {goal.assignedToName}</span>
-                          <span>Due: {new Date(goal.dueDate).toLocaleDateString()}</span>
-                          <span>Tasks: {goal.completedTasks}/{goal.totalTasks}</span>
-                        </div>
-                        <div className="mt-2">
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="text-gray-500">Progress</span>
-                            <span className="font-medium text-gray-900">{goal.progress}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${getProgressColor(goal.progress)}`}
-                              style={{ width: `${goal.progress}%` }}
-                            />
-                          </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${getProgressColor(member.progressPercentage)}`}
+                            style={{ width: `${member.progressPercentage}%` }}
+                          />
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2 ml-4">
-                        <button
-                          onClick={() => {
-                            setSelectedGoal(goal);
-                            setShowGoalDetailsModal(true);
-                          }}
-                          className="text-gray-400 hover:text-gray-500"
-                          title="View Details"
+                      
+                      <div className="flex justify-between text-xs text-gray-400">
+                        <span>Last active: {formatTimestamp(member.lastActivity)}</span>
+                        <Link
+                          to={`/team-goals?assignee=${member.id}`}
+                          className="text-blue-600 hover:text-blue-700 font-medium"
                         >
-                          <EyeIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedGoal(goal);
-                            setShowEditGoalModal(true);
-                          }}
-                          className="text-gray-400 hover:text-gray-500"
-                          title="Edit Goal"
-                        >
-                          <PencilIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => deleteGoal(goal.id)}
-                          className="text-gray-400 hover:text-red-500"
-                          title="Delete Goal"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
+                          View Details
+                        </Link>
                       </div>
                     </div>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button
+              onClick={() => setShowCreateGoalModal(true)}
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <PlusIcon className="h-8 w-8 text-blue-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Create Goal</p>
+                <p className="text-xs text-gray-600">Assign new goals to team</p>
+              </div>
+            </button>
+            <Link
+              to="/analytics"
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <ChartBarIcon className="h-8 w-8 text-green-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">View Analytics</p>
+                <p className="text-xs text-gray-600">Team performance insights</p>
+              </div>
+            </Link>
+            <button
+              onClick={() => setActiveTab('reviews')}
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <DocumentTextIcon className="h-8 w-8 text-purple-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Manage Reviews</p>
+                <p className="text-xs text-gray-600">Performance reviews</p>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
+    );
+  };
 
-      {/* Create Goal Modal */}
-      <CreateGoalModal
-        isOpen={showCreateGoalModal}
-        onClose={() => setShowCreateGoalModal(false)}
-        onSubmit={createGoal}
-        objectives={objectives}
-        teamMembers={teamMembers}
-      />
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
 
-      {/* Edit Goal Modal */}
-      <EditGoalModal
-        isOpen={showEditGoalModal}
-        onClose={() => {
-          setShowEditGoalModal(false);
-          setSelectedGoal(null);
-        }}
-        onSubmit={editGoal}
-        objectives={objectives}
-        teamMembers={teamMembers}
-        goal={selectedGoal}
-      />
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Manager Dashboard
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Welcome back, {user?.first_name}! Here's your team overview.
+          </p>
+        </div>
 
-      {/* Goal Details Modal */}
-      <GoalDetailsModal
-        isOpen={showGoalDetailsModal}
-        onClose={() => {
-          setShowGoalDetailsModal(false);
-          setSelectedGoal(null);
-        }}
-        goal={selectedGoal}
-      />
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('objectives')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'objectives'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center">
+                  <FlagIcon className="h-5 w-5 mr-2" />
+                  Objectives & Team
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('reviews')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'reviews'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center">
+                  <DocumentTextIcon className="h-5 w-5 mr-2" />
+                  Performance Reviews
+                </div>
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {renderTabContent()}
+
+        {/* Modals */}
+        <CreateGoalModal
+          isOpen={showCreateGoalModal}
+          onClose={() => setShowCreateGoalModal(false)}
+          onSubmit={createGoal}
+          objectives={objectives}
+          teamMembers={teamMembers}
+        />
+
+        <EditGoalModal
+          isOpen={showEditGoalModal}
+          onClose={() => {
+            setShowEditGoalModal(false);
+            setSelectedGoal(null);
+          }}
+          onSubmit={editGoal}
+          objectives={objectives}
+          teamMembers={teamMembers}
+          goal={selectedGoal}
+        />
+
+        <GoalDetailsModal
+          isOpen={showGoalDetailsModal}
+          onClose={() => {
+            setShowGoalDetailsModal(false);
+            setSelectedGoal(null);
+          }}
+          goal={selectedGoal}
+        />
+      </div>
     </div>
   );
 }

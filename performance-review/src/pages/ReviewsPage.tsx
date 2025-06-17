@@ -95,7 +95,7 @@ export const ReviewsPage: React.FC = () => {
             description: `Self-assessment for ${assessment.cycle.name}`,
             cycle_name: assessment.cycle.name,
             due_date: assessment.cycle.self_assessment_end,
-            status: assessment.status,
+            status: assessment.status || 'not_started',
             priority: getDueDatePriority(assessment.cycle.self_assessment_end)
           });
         }
@@ -112,7 +112,7 @@ export const ReviewsPage: React.FC = () => {
             description: `Review for ${review.reviewee.first_name} ${review.reviewee.last_name}`,
             cycle_name: review.cycle.name,
             due_date: review.cycle.peer_review_end,
-            status: review.status,
+            status: review.status || 'not_started',
             priority: getDueDatePriority(review.cycle.peer_review_end),
             reviewee_name: `${review.reviewee.first_name} ${review.reviewee.last_name}`
           });
@@ -131,7 +131,7 @@ export const ReviewsPage: React.FC = () => {
               description: `Review for ${review.employee.first_name} ${review.employee.last_name}`,
               cycle_name: review.cycle.name,
               due_date: review.cycle.manager_review_end,
-              status: review.status,
+              status: review.status || 'not_started',
               priority: getDueDatePriority(review.cycle.manager_review_end),
               reviewee_name: `${review.employee.first_name} ${review.employee.last_name}`
             });
@@ -306,7 +306,7 @@ export const ReviewsPage: React.FC = () => {
                         Current Phase: <span className="font-medium">{cycle.current_phase}</span>
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {cycle.review_type.replace('_', ' ')} • {cycle.participant_count} participants
+                        {cycle.review_type?.replace('_', ' ') || 'Review'} • {cycle.participant_count} participants
                       </p>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -349,7 +349,7 @@ export const ReviewsPage: React.FC = () => {
                     <p className="text-xs text-gray-600 mt-1">{task.description}</p>
                     <div className="flex items-center space-x-4 mt-2">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
-                        {task.status.replace('_', ' ')}
+                        {task.status?.replace('_', ' ') || 'Unknown'}
                       </span>
                       <span className="text-xs text-gray-500">
                         Due: {reviewsService.formatDate(task.due_date)}
@@ -449,7 +449,7 @@ export const ReviewsPage: React.FC = () => {
                       {task.priority} priority
                     </span>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
-                      {task.status.replace('_', ' ')}
+                      {task.status?.replace('_', ' ') || 'Unknown'}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 mb-2">{task.description}</p>
@@ -610,7 +610,7 @@ export const ReviewsPage: React.FC = () => {
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Type:</span>
                   <span className="text-sm font-medium text-gray-900 capitalize">
-                    {selectedCycle.review_type.replace('_', ' ')}
+                    {selectedCycle.review_type?.replace('_', ' ') || 'Review'}
                   </span>
                 </div>
                 <div className="flex justify-between">
